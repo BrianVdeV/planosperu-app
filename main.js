@@ -1,5 +1,6 @@
 const { app, BrowserWindow } = require('electron')
 const path = require('path')
+const url = require('url') // ¡No olvides importar esto!
 
 let win
 
@@ -9,12 +10,18 @@ function createWindow() {
     height: 600,
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false // si usas nodeIntegration
     },
   })
 
-  win.loadURL('http://localhost:3000') // Si estás en desarrollo
-  // O si ya tienes la app de React compilada, puedes usar:
-  // win.loadFile(path.join(__dirname, 'build', 'index.html'))
+  // Cargar el archivo HTML empaquetado
+  win.loadURL(
+    url.format({
+      pathname: path.join(__dirname, 'build', 'index.html'),
+      protocol: 'file:',
+      slashes: true
+    })
+  )
 
   win.on('closed', () => {
     win = null

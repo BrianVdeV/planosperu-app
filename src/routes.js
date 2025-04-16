@@ -38,6 +38,8 @@ const Validation = React.lazy(() => import('./views/forms/validation/Validation'
 
 const Charts = React.lazy(() => import('./views/charts/Charts'))
 
+const CotizacionesPage = React.lazy(() => import('./views/cotizaciones/CotizacionesPage'));
+const cotizacion = React.lazy(() => import('../app'));
 // Icons
 const CoreUIIcons = React.lazy(() => import('./views/icons/coreui-icons/CoreUIIcons'))
 const Flags = React.lazy(() => import('./views/icons/flags/Flags'))
@@ -97,6 +99,9 @@ const routes = [
   { path: '/notifications/modals', name: 'Modals', element: Modals },
   { path: '/notifications/toasts', name: 'Toasts', element: Toasts },
   { path: '/widgets', name: 'Widgets', element: Widgets },
+  { path: '/cotizaciones', name: 'Cotizaciones', element: CotizacionesPage },
+  { path: '/api/cotizacion', name: 'Cotizacion', element: cotizacion },
+
 ]
 
 export default routes

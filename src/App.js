@@ -1,11 +1,10 @@
 import React, { Suspense, useEffect } from 'react'
-import { HashRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom' // Cambiado de HashRouter a BrowserRouter
 import { useSelector } from 'react-redux'
 
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 
-// We use those styles to show code examples, you should remove them in your application.
 import './scss/examples.scss'
 
 // Containers
@@ -36,7 +35,7 @@ const App = () => {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <HashRouter>
+    <BrowserRouter> {/* Cambiado de HashRouter a BrowserRouter */}
       <Suspense
         fallback={
           <div className="pt-3 text-center">
@@ -52,7 +51,7 @@ const App = () => {
           <Route path="*" name="Home" element={<DefaultLayout />} />
         </Routes>
       </Suspense>
-    </HashRouter>
+    </BrowserRouter>
   )
 }
 
