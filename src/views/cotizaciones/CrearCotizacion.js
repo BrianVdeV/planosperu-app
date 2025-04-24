@@ -10,7 +10,7 @@ export default function CrearCotizacion() {
   const [montoCuotas, setMontoCuotas] = useState([]);
   const [montoCancelacion, setMontoCancelacion] = useState(""); // Inicializa con una cadena vacía
   const [montoTotal, setMontoTotal] = useState(''); // Para almacenar el monto total ingresado
-
+  const [fechasCuotas, setFechasCuotas] = useState([]); 
   // 🔥 Añadir estados para usuarios
   const [usuarios, setUsuarios] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
@@ -72,72 +72,127 @@ export default function CrearCotizacion() {
     const username = selectedOption ? selectedOption.value : '';
     setUsuarioSeleccionado(username);
   };
+  const feriados = [
+    { date: "2025-01-01", name: "Año Nuevo" },
+    { date: "2025-01-02", name: "Día no laborable para el sector público" },
+    { date: "2025-04-17", name: "Jueves Santo" },
+    { date: "2025-04-18", name: "Viernes Santo" },
+    { date: "2025-05-01", name: "Día del Trabajo" },
+    { date: "2025-06-07", name: "Batalla de Arica y Día de la Bandera" },
+    { date: "2025-06-29", name: "Día de San Pedro y San Pablo" },
+    { date: "2025-07-23", name: "Día de la Fuerza Aérea del Perú" },
+    { date: "2025-07-28", name: "Fiestas Patrias" },
+    { date: "2025-07-29", name: "Fiestas Patrias" },
+    { date: "2025-08-06", name: "Batalla de Junín" },
+    { date: "2025-08-30", name: "Santa Rosa de Lima" },
+    { date: "2025-10-08", name: "Combate de Angamos" },
+    { date: "2025-11-01", name: "Día de Todos los Santos" },
+    { date: "2025-12-08", name: "Inmaculada Concepción" },
+    { date: "2025-12-09", name: "Batalla de Ayacucho" },
+    { date: "2025-12-25", name: "Navidad" }
+  ];
+ // Función auxiliar para sumar días hábiles (excluye sábados y domingos)
+ const sumarDiasHabiles = (fechaStr, dias) => {
+  const [año, mes, dia] = fechaStr.split('-').map(Number);
+  let fecha = new Date(año, mes - 1, dia);
 
-  const handleCotizacionChange = async (selectedOption) => {
-    const cotizacionId = selectedOption ? selectedOption.value : '';
-    setCotizacionSeleccionado(cotizacionId);
-  
-    if (cotizacionId && montoTotal > 0) {
-      const selectedCotizacion = cotizacion.find(c => c.id === cotizacionId);
-  
-      if (selectedCotizacion) {
-        const cuotas = selectedCotizacion.cuotas;
-        let montos = [];
-  
-        if (cuotas === 1) {
-          montos = [montoTotal];
-        } else {
-          let porcentajes = [];
-  
-          if (cuotas === 2) {
-            porcentajes = [0.55, 0.45];
-          } else if (cuotas === 3) {
-            porcentajes = [0.40, 0.30, 0.30];
-          } else if (cuotas === 4) {
-            porcentajes = [0.35, 0.25, 0.20, 0.20];
-          }
-  
-          const redondearDecena = (monto) => Math.round(monto / 10) * 10;
-          let sumaRedondeada = 0;
-  
-          for (let i = 0; i < porcentajes.length; i++) {
-            if (i === porcentajes.length - 1) {
-              montos.push(parseFloat((montoTotal - sumaRedondeada).toFixed(2)));
-            } else {
-              const monto = redondearDecena(montoTotal * porcentajes[i]);
-              montos.push(monto);
-              sumaRedondeada += monto;
-            }
-          }
+  // Sumar días corridos inicialmente
+  fecha.setDate(fecha.getDate() + dias);
+
+  const feriadosSet = new Set(feriados.map(f => f.date));
+
+  // Mientras caiga en sábado, domingo o feriado, avanzar 1 día
+  while (
+    fecha.getDay() === 0 || // domingo
+    fecha.getDay() === 6 || // sábado
+    feriadosSet.has(fecha.toISOString().split('T')[0]) // feriado
+  ) {
+    fecha.setDate(fecha.getDate() - 1);
+  }
+
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+};
+
+
+const handleCotizacionChange = async (selectedOption) => {
+  const cotizacionId = selectedOption ? selectedOption.value : '';
+  setCotizacionSeleccionado(cotizacionId);
+
+  if (cotizacionId && montoTotal > 0) {
+    const selectedCotizacion = cotizacion.find(c => c.id === cotizacionId);
+
+    if (selectedCotizacion) {
+      const cuotas = selectedCotizacion.cuotas;
+      const fechaHoy = obtenerFechaHoy(); // yyyy-mm-dd
+      let montos = [];
+      let fechas = [];
+
+      if (cuotas === 1) {
+        montos = [montoTotal];
+        fechas = [fechaHoy];
+      } else {
+        let porcentajes = [];
+
+        if (cuotas === 2) {
+          porcentajes = [0.55, 0.45];
+        } else if (cuotas === 3) {
+          porcentajes = [0.40, 0.30, 0.30];
+        } else if (cuotas === 4) {
+          porcentajes = [0.35, 0.25, 0.20, 0.20];
         }
-  
-        setMontoCuotas(montos);
-        setMontoCancelacion(montos[0]);
-  
-        // Detalles según tipo
-        if (selectedCotizacion.tipo === "Planos y Documentos") {
-          setDetalles("Se elaborará planos y documentos para , según normativa vigente.");
-        } else if (selectedCotizacion.tipo === "Documentos") {
-          setDetalles("Se elaborará documentos para , según normativa vigente.");
-        } else if (selectedCotizacion.tipo === "Planos") {
-          setDetalles("Se elaborará planos para");
-        } else {
-          setDetalles("");
+
+        const redondearDecena = (monto) => Math.round(monto / 10) * 10;
+        let sumaRedondeada = 0;
+
+        for (let i = 0; i < porcentajes.length; i++) {
+          if (i === porcentajes.length - 1) {
+            montos.push(parseFloat((montoTotal - sumaRedondeada).toFixed(2)));
+          } else {
+            const monto = redondearDecena(montoTotal * porcentajes[i]);
+            montos.push(monto);
+            sumaRedondeada += monto;
+          }
+
+          // Calcular fecha exacta según días personalizados
+          let diasExtra = 0;
+          if (i === 1) diasExtra = selectedCotizacion.dias1 || 0;
+          else if (i === 2) diasExtra = selectedCotizacion.dias2 || 0;
+          else if (i === 3) diasExtra = selectedCotizacion.dias3 || 0;
+
+          const fechaBase = i === 0 ? fechaHoy : fechas[fechas.length - 1];
+          const nuevaFecha = i === 0 ? fechaHoy : sumarDiasHabiles(fechaBase, diasExtra);
+          fechas.push(nuevaFecha);
         }
       }
+
+      setMontoCuotas(montos);
+      setMontoCancelacion(montos[0]);
+      setFechasCuotas(fechas);
     }
-  };
+  }
+};
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();  // Evita el comportamiento por defecto (recargar la página)
   
+    const selectedCotizacion = cotizacion.find(c => c.id === cotizacionSeleccionado);
+    const codigoCotizacion = selectedCotizacion ? selectedCotizacion.codigo : '';  // Obtener el código de la cotización seleccionada
+  
     const datos = {
-      id: usuarioSeleccionado,                // si 'usuarioSeleccionado' representa un ID
-      codigo: cotizacionSeleccionado,         // nombre de la hoja a conservar
-      nombre: montoTotal.toString(),          // nombre de la cotización
+      usuario: usuarioSeleccionado,
+      codigo: codigoCotizacion,         // Código de la cotización
       detalles: detalles,
-      cliente: observaciones                  // o el campo que represente al cliente
+      piso: e.target.pisos.value,       // Obtener el valor del campo 'pisos'
+      area: e.target.area.value,       // Obtener el valor del campo 'area'
+      cliente: e.target.cliente.value, // Obtener el valor del campo 'cliente'
+      ubicacion: e.target.ubicacion.value, // Obtener el valor del campo 'ubicacion'
+      telefono: e.target.telefono.value,   // Obtener el valor del campo 'telefono'
+      dni: e.target.dni.value,            // Obtener el valor del campo 'dni'
+      observaciones: observaciones,       // Observaciones del formulario
+      cuotas: montoCuotas,            // Cuotas calculadas
+      fechas:fechasCuotas,
     };
-    
   
     const response = await fetch('http://127.0.0.1:5000/crear-cotizacion', {
       method: 'POST',
@@ -146,17 +201,39 @@ export default function CrearCotizacion() {
     });
   
     if (!response.ok) {
+      const errorText = await response.text();
       alert('Error al generar la cotización');
       return;
     }
   
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
+  
+    // Generar el nombre del archivo en el frontend
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');  // Obtener el mes en formato 2 dígitos
+    const dia = String(hoy.getDate()).padStart(2, '0');  // Obtener el día en formato 2 dígitos
+    const mes_dia = `${mes}${dia}`;
+    
+    // Abreviar el nombre de usuario
+    const abreviado_usuario = (usuarioSeleccionado.slice(0, 3) || 'USR').toUpperCase();
+    
+    // Limpiar los valores del cliente y la ubicación de caracteres no alfanuméricos
+    const limpiar = (texto) => texto.replace(/[^a-zA-Z0-9_-]/g, '').replace(/\s+/g, '_');
+    const cliente_limpio = limpiar(e.target.cliente.value || 'Cliente');
+    const ubicacion_limpia = limpiar(e.target.ubicacion.value || 'Ubicacion');
+  
+    // Generar el nombre del archivo
+    const nombre_archivo = `CZ-${anio}-${mes_dia}-${abreviado_usuario}-${codigoCotizacion}-${cliente_limpio}-${ubicacion_limpia}.xlsm`;
+  
+    // Crear un enlace para descargar el archivo con el nombre generado
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'cotizacion_generada.xlsm';
+    a.download = nombre_archivo;  // Usar el nombre del archivo generado
     a.click();
   };
+  
   const handleMontoTotalChange = (e) => {
     const value = parseFloat(e.target.value) || '';
     setMontoTotal(value);
@@ -167,9 +244,12 @@ export default function CrearCotizacion() {
       if (selectedCotizacion) {
         const cuotas = selectedCotizacion.cuotas;
         let montos = [];
+        let fechas = [];
+        const fechaHoy = obtenerFechaHoy();
   
         if (cuotas === 1) {
           montos = [value];
+          fechas = [fechaHoy];
         } else {
           let porcentajes = [];
   
@@ -192,44 +272,35 @@ export default function CrearCotizacion() {
               montos.push(monto);
               sumaRedondeada += monto;
             }
+  
+            // Calcular fecha exacta según días personalizados
+           // Calcular fecha exacta según días personalizados
+           let diasExtra = 0;
+           if (i === 1) diasExtra = selectedCotizacion.dias1 || 0;
+           else if (i === 2) diasExtra = selectedCotizacion.dias2 || 0;
+           else if (i === 3) diasExtra = selectedCotizacion.dias3 || 0;
+ 
+           const fechaBase = i === 0 ? fechaHoy : fechas[fechas.length - 1];
+           const nuevaFecha = i === 0 ? fechaHoy : sumarDiasHabiles(fechaBase, diasExtra);
+           fechas.push(nuevaFecha);
           }
         }
   
         setMontoCuotas(montos);
         setMontoCancelacion(montos[0]);
+        setFechasCuotas(fechas);
       }
     }
-    const handleCrearCotizacion = async () => {
-      const datos = {
-        id: 5,
-        codigo: "ABC123",
-        nombre: "Cotización especial",
-        detalles: "Detalles largos de cotización que deben ir en varias filas...",
-        cliente: "Cliente Ejemplo",
-      };
-    
-      const response = await fetch('http://localhost:5000/crear-cotizacion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datos),
-      });
-    
-      if (!response.ok) {
-        alert('Error al generar el Excel');
-        return;
-      }
-    
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'cotizacion_generada.xlsm';
-      a.click();
-    };
-
-    
   };
-
+  
+  const obtenerFechaHoy = () => {
+    const hoy = new Date();
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const anio = hoy.getFullYear();
+    return `${anio}-${mes}-${dia}`;  // "YYYY-MM-DD"
+  };
+  
   return (
     <div className="container">
       <div className="card mt-3">
@@ -316,16 +387,16 @@ export default function CrearCotizacion() {
             </div>
 
             <div className="mb-3">
-  <label className="form-label">Detalles</label>
-  <textarea
-    className="form-control"
-    name="detalles"
-    rows="3"
-    value={detalles}
-    onChange={(e) => setDetalles(e.target.value)}
-    required
-  ></textarea>
-</div>
+              <label className="form-label">Detalles</label>
+              <textarea
+                className="form-control"
+                name="detalles"
+                rows="3"
+                value={detalles}
+                onChange={(e) => setDetalles(e.target.value)}
+                required
+              ></textarea>
+            </div>
 
 
             <div className="row">
@@ -351,19 +422,20 @@ export default function CrearCotizacion() {
               />
             </div>
 
-            {/* Mostrar las cuotas calculadas */}
+           {/* Mostrar las cuotas con su fecha al costado */}
             <div className="mb-3">
               <label className="form-label">Cuotas</label>
-              {montoCuotas.length > 0 && (
+              {montoCuotas.length > 0 && fechasCuotas.length > 0 && (
                 <ul>
                   {montoCuotas.map((monto, index) => (
                     <li key={index}>
-                      Cuota {index + 1}: S/. {monto}
+                      Cuota {index + 1}: S/. {monto}  –  Fecha: {fechasCuotas[index]}
                     </li>
                   ))}
                 </ul>
               )}
             </div>
+
 
             {/* Campo Observaciones */}
             <div className="mb-3">
