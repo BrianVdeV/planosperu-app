@@ -1,6 +1,6 @@
 {
   "name": "@coreui/coreui-free-react-admin-template",
-  "version": "5.4.0",
+  "version": "1.0.0",
   "description": "CoreUI Free React Admin Template",
   "homepage": ".",
   "bugs": {
@@ -13,18 +13,18 @@
   "license": "MIT",
   "author": "The CoreUI Team (https://github.com/orgs/coreui/people)",
   "scripts": {
-  "start": "react-scripts start",
-  "react": "vite",
-  "flask": "python app.py",
-  "electron:dev": "npm-run-all --parallel flask electron",
-  "dev": "cross-env NODE_ENV=development npm-run-all --parallel flask react",
-  "build": "vite build",
-  "lint": "eslint",
-  "pack": "electron-builder --dir",
-  "serve": "vite preview",
-  "electron": "electron main.js",
-  "dist": "electron-builder"
-},
+    "start": "react-scripts start",
+    "react": "vite",
+    "flask": "python app.py",
+    "electron:dev": "npm-run-all --parallel flask electron",
+    "dev": "cross-env NODE_ENV=development npm-run-all --parallel flask react",
+    "build": "vite build",
+    "lint": "eslint",
+    "pack": "electron-builder --dir",
+    "serve": "vite preview",
+    "electron": "electron main.js",
+    "dist": "electron-builder"
+  },
   "dependencies": {
     "@coreui/chartjs": "^4.1.0",
     "@coreui/coreui": "^5.3.1",
@@ -39,6 +39,7 @@
     "classnames": "^2.5.1",
     "core-js": "^3.40.0",
     "cors": "^2.8.5",
+    "electron-updater": "^6.6.2",
     "express": "^5.1.0",
     "mysql2": "^3.14.0",
     "prop-types": "^15.8.1",
@@ -75,10 +76,29 @@
     "productName": "MiAplicacionElectron",
     "files": [
       "build/**/*",
-      "app.exe",
       "main.js",
+      "Cotizaciones.xlsm",
       "package.json",
       "node_modules/**/*"
+    ],
+  "extraResources": [
+    {
+      "from": "./dist/app.exe",
+      "to": "dist/app.exe"
+    },
+    {
+      "from": "./Cotizaciones.xlsm",
+      "to": "dist/Cotizaciones.xlsm"
+    }
+  ],
+
+    
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "kimberly31-HC",
+        "repo": "planosperu-app"
+      }
     ],
     "directories": {
       "output": "dist"

@@ -5,11 +5,12 @@ import tempfile
 import traceback
 from datetime import datetime
 from flask_cors import CORS
-from waitress import serve
-
+import sys 
 app = Flask(__name__)
 CORS(app)
-app.debug = False
+def obtener_ruta_absoluta(nombre_archivo):
+    base_path = os.path.dirname(os.path.abspath(sys.executable))  
+    return os.path.join(base_path, nombre_archivo)
 
 @app.route('/crear-cotizacion', methods=['POST'])
 def crear_cotizacion():
@@ -29,10 +30,9 @@ def crear_cotizacion():
         pisos = data.get('piso')
         area = data.get('area')
         cuotas = data.get('cuotas', [])
-        fechas = data.get('fechas', [])
-
+        fechas= data.get('fechas',[])
         # Verificar si el archivo de plantilla existe
-        ruta_original = 'Cotizaciones.xlsm'
+        ruta_original = obtener_ruta_absoluta('Cotizaciones.xlsm')
         if not os.path.exists(ruta_original):
             return 'El archivo original no se encuentra', 400
 
@@ -96,13 +96,11 @@ def crear_cotizacion():
         for i, monto in enumerate(cuotas):
             if i < len(celdas_cuotas):
                 hoja.range(celdas_cuotas[i]).value = monto
-
-        # Llenar fechas
+         # Llenar fechas
         celdas_fechas = ['G61', 'G62', 'G63', 'G64']
         for i, fecha in enumerate(fechas):
             if i < len(celdas_fechas):
                 hoja.range(celdas_fechas[i]).value = fecha
-
         # Crear nombre de archivo único
         hoy = datetime.now()
         anio = hoy.strftime("%Y")
@@ -140,7 +138,5 @@ def crear_cotizacion():
         print(traceback.format_exc())
         return f'Ocurrió un error: {str(e)}', 500
 
-
 if __name__ == '__main__':
-    # Usar Waitress para servir la aplicación en producción
-    serve(app, host='0.0.0.0', port=5000)
+    app.run(port=5000)

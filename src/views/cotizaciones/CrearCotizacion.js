@@ -202,7 +202,7 @@ const handleCotizacionChange = async (selectedOption) => {
   
     if (!response.ok) {
       const errorText = await response.text();
-      alert('Error al generar la cotización');
+      alert(`Error al generar la cotización: ${errorText}`);
       return;
     }
   
