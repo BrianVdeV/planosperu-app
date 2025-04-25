@@ -80,10 +80,15 @@ def crear_cotizacion():
         hoja.range('D14').value = area
 
         # Llenar observaciones
+        # Asegurarse de que 'observaciones' no sea None
+        observaciones = observaciones or ''  # Si 'observaciones' es None, se convierte en una cadena vacía
+
+        # Llenar observaciones
         for i, linea in enumerate(observaciones.split('\n'), start=52):
             if i > 54:
                 break
             hoja.range(f'C{i}').value = linea
+
 
         # Llenar cuotas
         celdas_cuotas = ['C61', 'C62', 'C63', 'C64']
