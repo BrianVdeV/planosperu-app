@@ -5,9 +5,11 @@ import tempfile
 import traceback
 from datetime import datetime
 from flask_cors import CORS
-import sys 
+import sys
+
 app = Flask(__name__)
 CORS(app)
+
 def obtener_ruta_absoluta(nombre_archivo):
     base_path = os.path.dirname(os.path.abspath(sys.executable))  
     return os.path.join(base_path, nombre_archivo)
@@ -30,26 +32,18 @@ def crear_cotizacion():
         pisos = data.get('piso')
         area = data.get('area')
         cuotas = data.get('cuotas', [])
-        fechas= data.get('fechas',[])
-        # Verificar si el archivo de plantilla existe
-        ruta_original = obtener_ruta_absoluta('Cotizaciones.xlsm')
+        fechas = data.get('fechas', [])
+        
+        # Verificar si el archivo de plantilla existe con el nombre del código
+        ruta_original = obtener_ruta_absoluta(f'{codigo}.xlsm')
         if not os.path.exists(ruta_original):
-            return 'El archivo original no se encuentra', 400
+            return f'El archivo con el código "{codigo}" no se encuentra', 400
 
         # Iniciar Excel de forma oculta
         app_excel = xw.App(visible=False)
         libro = app_excel.books.open(ruta_original)
 
-        # Verificar si la hoja con el código existe
-        if codigo not in [hoja.name for hoja in libro.sheets]:
-            return f'La hoja con el código "{codigo}" no existe en el archivo', 400
-
-        # Eliminar hojas innecesarias
-        for hoja in libro.sheets:
-            if hoja.name != codigo:
-                hoja.delete()
-
-        hoja = libro.sheets[codigo]
+        hoja = libro.sheets[0]  # Solo se trabaja con la primera hoja del archivo
 
         # Limitar el tamaño de los detalles
         limites_detalles = [15, 60]
@@ -96,11 +90,13 @@ def crear_cotizacion():
         for i, monto in enumerate(cuotas):
             if i < len(celdas_cuotas):
                 hoja.range(celdas_cuotas[i]).value = monto
-         # Llenar fechas
+        
+        # Llenar fechas
         celdas_fechas = ['G61', 'G62', 'G63', 'G64']
         for i, fecha in enumerate(fechas):
             if i < len(celdas_fechas):
                 hoja.range(celdas_fechas[i]).value = fecha
+        
         # Crear nombre de archivo único
         hoy = datetime.now()
         anio = hoy.strftime("%Y")
