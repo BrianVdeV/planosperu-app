@@ -28,14 +28,14 @@ def crear_cotizacion():
         ubicacion = data.get('ubicacion')
         telefono = data.get('telefono')
         dni = data.get('dni')
-        observaciones = data.get('observaciones', '')
+        observaciones = data.get('observaciones') or ' '
         pisos = data.get('piso')
         area = data.get('area')
         cuotas = data.get('cuotas', [])
         fechas = data.get('fechas', [])
         
         # Verificar si el archivo de plantilla existe con el nombre del código
-        ruta_original = obtener_ruta_absoluta(f'{codigo}.xlsm')
+        ruta_original = obtener_ruta_absoluta(f'{codigo}.xlsx')
         if not os.path.exists(ruta_original):
             return f'El archivo con el código "{codigo}" no se encuentra', 400
 
@@ -80,10 +80,6 @@ def crear_cotizacion():
         hoja.range('D14').value = area
 
         # Llenar observaciones
-        # Asegurarse de que 'observaciones' no sea None
-        observaciones = observaciones or ''  # Si 'observaciones' es None, se convierte en una cadena vacía
-
-        # Llenar observaciones
         for i, linea in enumerate(observaciones.split('\n'), start=52):
             if i > 54:
                 break
@@ -115,11 +111,11 @@ def crear_cotizacion():
         cliente_limpio = limpiar(cliente or 'Cliente')
         ubicacion_limpia = limpiar(ubicacion or 'Ubicacion')
 
-        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}.xlsm"
+        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}.xlsx"
         print(f"Nombre del archivo generado: {nombre_archivo}")
 
         # Crear archivo temporal
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsm") as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
             ruta_salida = temp_file.name
 
         # Guardar el archivo generado

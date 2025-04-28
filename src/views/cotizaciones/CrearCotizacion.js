@@ -225,7 +225,7 @@ const handleCotizacionChange = async (selectedOption) => {
     const ubicacion_limpia = limpiar(e.target.ubicacion.value || 'Ubicacion');
   
     // Generar el nombre del archivo
-    const nombre_archivo = `CZ-${anio}-${mes_dia}-${abreviado_usuario}-${codigoCotizacion}-${cliente_limpio}-${ubicacion_limpia}.xlsm`;
+    const nombre_archivo = `CZ-${anio}-${mes_dia}-${abreviado_usuario}-${codigoCotizacion}-${cliente_limpio}-${ubicacion_limpia}.xlsx`;
   
     // Crear un enlace para descargar el archivo con el nombre generado
     const a = document.createElement('a');
@@ -312,7 +312,9 @@ const handleCotizacionChange = async (selectedOption) => {
         <form onSubmit={handleSubmit}>
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Usuario</label>
+              <label className="form-label">
+                Usuario <span style={{ color: 'red' }}>*</span>
+              </label>
                 <Select
                   options={usuarios.map(usuario => ({
                     value: usuario.username,  // Asegúrate de que 'username' es único
@@ -326,7 +328,7 @@ const handleCotizacionChange = async (selectedOption) => {
 
               {/* Select de Cotizaciones */}
               <div className="col-md-6 mb-3">
-                <label className="form-label">Cotización</label>
+                <label className="form-label">Cotización <span style={{ color: 'red' }}>*</span></label>
                 <Select
                   options={[
                     {
@@ -366,7 +368,7 @@ const handleCotizacionChange = async (selectedOption) => {
             </div>
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Cliente</label>
+                <label className="form-label">Cliente <span style={{ color: 'red' }}>*</span></label>
                 <input type="text" className="form-control" name="cliente" required />
               </div>
               <div className="col-md-6 mb-3">
@@ -381,13 +383,13 @@ const handleCotizacionChange = async (selectedOption) => {
                 <input type="text" className="form-control" name="telefono" />
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Ubicación</label>
+                <label className="form-label">Ubicación <span style={{ color: 'red' }}>*</span></label>
                 <input type="text" className="form-control" name="ubicacion" required />
               </div>
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Detalles</label>
+              <label className="form-label">Detalles <span style={{ color: 'red' }}>*</span></label>
               <textarea
                 className="form-control"
                 name="detalles"
@@ -401,17 +403,17 @@ const handleCotizacionChange = async (selectedOption) => {
 
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Número de Pisos</label>
+                <label className="form-label">Número de Pisos <span style={{ color: 'red' }}>*</span></label>
                 <input type="number" className="form-control" name="pisos" required />
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Área (m²)</label>
+                <label className="form-label">Área (m²) <span style={{ color: 'red' }}>*</span></label>
                 <input type="number" step="0.01" className="form-control" name="area" required />
               </div>
             </div>     
             {/* Campo para ingresar el monto total */}
             <div className="mb-3">
-              <label className="form-label">Monto Cancelación</label>
+              <label className="form-label">Monto Cancelación <span style={{ color: 'red' }}>*</span></label>
               <input
                 type="number"
                 step="0.01"
