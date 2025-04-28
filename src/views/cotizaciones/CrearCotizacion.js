@@ -11,6 +11,9 @@ export default function CrearCotizacion() {
   const [montoCancelacion, setMontoCancelacion] = useState(""); // Inicializa con una cadena vacía
   const [montoTotal, setMontoTotal] = useState(''); // Para almacenar el monto total ingresado
   const [fechasCuotas, setFechasCuotas] = useState([]); 
+  const [showModal, setShowModal] = useState(false);  // Estado para mostrar el modal
+  const [excelBlob, setExcelBlob] = useState(null);  // Estado para almacenar el blob de Excel
+  
   // 🔥 Añadir estados para usuarios
   const [usuarios, setUsuarios] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
@@ -173,65 +176,114 @@ const handleCotizacionChange = async (selectedOption) => {
 };
 
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();  // Evita el comportamiento por defecto (recargar la página)
-  
-    const selectedCotizacion = cotizacion.find(c => c.id === cotizacionSeleccionado);
-    const codigoCotizacion = selectedCotizacion ? selectedCotizacion.codigo : '';  // Obtener el código de la cotización seleccionada
-  
-    const datos = {
-      usuario: usuarioSeleccionado,
-      codigo: codigoCotizacion,         // Código de la cotización
-      detalles: detalles,
-      piso: e.target.pisos.value,       // Obtener el valor del campo 'pisos'
-      area: e.target.area.value,       // Obtener el valor del campo 'area'
-      cliente: e.target.cliente.value, // Obtener el valor del campo 'cliente'
-      ubicacion: e.target.ubicacion.value, // Obtener el valor del campo 'ubicacion'
-      telefono: e.target.telefono.value,   // Obtener el valor del campo 'telefono'
-      dni: e.target.dni.value,            // Obtener el valor del campo 'dni'
-      observaciones: observaciones,       // Observaciones del formulario
-      cuotas: montoCuotas,            // Cuotas calculadas
-      fechas:fechasCuotas,
-    };
-  
-    const response = await fetch('http://127.0.0.1:5000/crear-cotizacion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos),
-    });
-  
-    if (!response.ok) {
-      const errorText = await response.text();
-      alert(`Error al generar la cotización: ${errorText}`);
-      return;
-    }
-  
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-  
-    // Generar el nombre del archivo en el frontend
-    const hoy = new Date();
-    const anio = hoy.getFullYear();
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0');  // Obtener el mes en formato 2 dígitos
-    const dia = String(hoy.getDate()).padStart(2, '0');  // Obtener el día en formato 2 dígitos
-    const mes_dia = `${mes}${dia}`;
-    
-    // Abreviar el nombre de usuario
-    const abreviado_usuario = (usuarioSeleccionado.slice(0, 3) || 'USR').toUpperCase();
-    
-    // Limpiar los valores del cliente y la ubicación de caracteres no alfanuméricos
-    const limpiar = (texto) => texto.replace(/[^a-zA-Z0-9_-]/g, '').replace(/\s+/g, '_');
-    const cliente_limpio = limpiar(e.target.cliente.value || 'Cliente');
-    const ubicacion_limpia = limpiar(e.target.ubicacion.value || 'Ubicacion');
-  
-    // Generar el nombre del archivo
-    const nombre_archivo = `CZ-${anio}-${mes_dia}-${abreviado_usuario}-${codigoCotizacion}-${cliente_limpio}-${ubicacion_limpia}.xlsx`;
-  
-    // Crear un enlace para descargar el archivo con el nombre generado
+const handleSubmit = async (e) => {
+  e.preventDefault();  // Evita el comportamiento por defecto (recargar la página)
+
+  // Obtener los datos de la cotización seleccionada
+  const selectedCotizacion = cotizacion.find(c => c.id === cotizacionSeleccionado);
+  const codigoCotizacion = selectedCotizacion ? selectedCotizacion.codigo : '';  // Código de la cotización seleccionada
+
+  // Recopilar los datos del formulario
+  const datos = {
+    usuario: usuarioSeleccionado,
+    codigo: codigoCotizacion,         // Código de la cotización
+    detalles: detalles,
+    piso: e.target.pisos.value,       // Obtener el valor del campo 'pisos'
+    area: e.target.area.value,        // Obtener el valor del campo 'area'
+    cliente: e.target.cliente.value,  // Obtener el valor del campo 'cliente'
+    ubicacion: e.target.ubicacion.value, // Obtener el valor del campo 'ubicacion'
+    telefono: e.target.telefono.value,   // Obtener el valor del campo 'telefono'
+    dni: e.target.dni.value,         // Obtener el valor del campo 'dni'
+    observaciones: observaciones,    // Observaciones del formulario
+    cuotas: montoCuotas,             // Cuotas calculadas
+    fechas: fechasCuotas,            // Fechas de cuotas
+  };
+
+  // Realizar la solicitud POST al backend
+  const response = await fetch('http://127.0.0.1:5000/crear-cotizacion', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    alert(`Error al generar la cotización: ${errorText}`);
+    return;
+  }
+
+  // Obtener el blob del archivo Excel
+  const blob = await response.blob();
+  setExcelBlob(blob);  // Guarda el blob de Excel
+
+  // Crear URL para el archivo Blob
+  const url = window.URL.createObjectURL(blob);
+
+  // Generar nombre del archivo basado en la fecha y datos de la cotización
+  const hoy = new Date();
+  const anio = hoy.getFullYear();  // Año actual
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0');  // Mes con formato de 2 dígitos
+  const dia = String(hoy.getDate()).padStart(2, '0');  // Día con formato de 2 dígitos
+  const mes_dia = `${mes}${dia}`;
+
+  // Abreviar el nombre de usuario
+  const abreviado_usuario = (usuarioSeleccionado.slice(0, 3) || 'USR').toUpperCase();
+
+  // Limpiar caracteres no alfanuméricos en cliente y ubicación
+  const limpiar = (texto) => texto.replace(/[^a-zA-Z0-9_-]/g, '').replace(/\s+/g, '_');
+  const cliente_limpio = limpiar(e.target.cliente.value || 'Cliente');
+  const ubicacion_limpia = limpiar(e.target.ubicacion.value || 'Ubicacion');
+
+  // Verificar las variables antes de pasarlas al PDF
+  console.log('Verificando las variables antes de generar el archivo:');
+  console.log('anio:', anio);
+  console.log('mes_dia:', mes_dia);
+  console.log('abreviado_usuario:', abreviado_usuario);
+  console.log('codigoCotizacion:', codigoCotizacion);
+  console.log('cliente_limpio:', cliente_limpio);
+  console.log('ubicacion_limpia:', ubicacion_limpia);
+
+  // Crear el enlace para descargar el archivo Excel
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CZ-${anio}-${mes_dia}-${abreviado_usuario}-${codigoCotizacion}-${cliente_limpio}-${ubicacion_limpia}.xlsx`;  // Usar el nombre del archivo generado
+  a.click();
+
+  // Llamar a la función de generación del PDF, pasando las variables correctas
+  handleGeneratePDF(anio, mes_dia, abreviado_usuario, codigoCotizacion, cliente_limpio, ubicacion_limpia);
+
+  // Muestra el modal de confirmación
+  setShowModal(true);
+};
+
+const handleGeneratePDF = (anio, mes_dia, abreviado_usuario, codigoCotizacion, cliente_limpio, ubicacion_limpia) => {
+  // Asegurarse de que todas las variables sean cadenas válidas
+  console.log('Generando PDF con las siguientes variables:');
+  console.log('anio:', anio);
+  console.log('mes_dia:', mes_dia);
+  console.log('abreviado_usuario:', abreviado_usuario);
+  console.log('codigoCotizacion:', codigoCotizacion);
+  console.log('cliente_limpio:', cliente_limpio);
+  console.log('ubicacion_limpia:', ubicacion_limpia);
+
+  const nombreArchivoPDF = `CZ-${anio}-${mes_dia}-${abreviado_usuario}-${codigoCotizacion}-${cliente_limpio}-${ubicacion_limpia}.pdf`;
+
+  console.log('Nombre del archivo PDF:', nombreArchivoPDF);  // Verificar el nombre del archivo
+
+  if (excelBlob) {
+    // Usamos el blob de Excel para generar el PDF
     const a = document.createElement('a');
-    a.href = url;
-    a.download = nombre_archivo;  // Usar el nombre del archivo generado
-    a.click();
+    a.href = URL.createObjectURL(excelBlob);  // El blob de Excel lo usamos para descargar el PDF
+    a.download = nombreArchivoPDF;  // Usar el nombre del archivo con la extensión .pdf
+    a.click();  // Iniciar la descarga
+  }
+
+  setShowModal(false);  // Cerrar el modal
+};
+
+  
+  const handleCancel = () => {
+    setShowModal(false);  // Solo cerrar el modal, sin generar el PDF
   };
   
   const handleMontoTotalChange = (e) => {
@@ -453,6 +505,37 @@ const handleCotizacionChange = async (selectedOption) => {
 
             <button type="submit" className="btn btn-primary">Crear Cotización</button>
           </form>
+
+          {showModal && (
+  <div className="modal" style={{ display: 'block' }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">¿Deseas generar el PDF?</h5>
+          <button type="button" className="btn-close" onClick={handleCancel}></button>
+        </div>
+        <div className="modal-body">
+          <p> ¿Quieres crear el PDF ahora?</p>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={handleCancel}>No</button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              // Llamar a handleGeneratePDF y pasar las variables necesarias
+              console.log('Variables a pasar:', anio, mes_dia, abreviado_usuario, codigoCotizacion, cliente_limpio, ubicacion_limpia);
+              handleGeneratePDF(anio, mes_dia, abreviado_usuario, codigoCotizacion, cliente_limpio, ubicacion_limpia);
+            }}
+          >
+            Sí
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
         </div>
       </div>
     </div>

@@ -85,7 +85,6 @@ def crear_cotizacion():
                 break
             hoja.range(f'C{i}').value = linea
 
-
         # Llenar cuotas
         celdas_cuotas = ['C61', 'C62', 'C63', 'C64']
         for i, monto in enumerate(cuotas):
@@ -111,24 +110,31 @@ def crear_cotizacion():
         cliente_limpio = limpiar(cliente or 'Cliente')
         ubicacion_limpia = limpiar(ubicacion or 'Ubicacion')
 
-        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}.xlsx"
+        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}"
+
         print(f"Nombre del archivo generado: {nombre_archivo}")
 
-        # Crear archivo temporal
+        # Crear archivo temporal Excel
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
             ruta_salida = temp_file.name
 
-        # Guardar el archivo generado
+        # Guardar el archivo generado como Excel
         libro.save(ruta_salida)
+
+        # Exportar a PDF
+        pdf_temp_path = ruta_salida.replace(".xlsx", ".pdf")
+        hoja.to_pdf(pdf_temp_path)  # Exporta a PDF usando xlwings
+
+        # Cerrar el libro y la aplicación Excel
         libro.close()
         app_excel.quit()
 
-        # Asegurarse de que el nombre del archivo se pase correctamente
+        # Asegurarse de que el archivo PDF se pase correctamente
         return send_file(
-            ruta_salida,
+            pdf_temp_path,
             as_attachment=True,
-            download_name=nombre_archivo,  # Usar la variable con el nombre correcto
-            mimetype='application/vnd.ms-excel.sheet.macroEnabled.12'
+            download_name=f"{nombre_archivo}.pdf",  # Usar el nombre correcto para el archivo PDF
+            mimetype='application/pdf'
         )
 
     except Exception as e:
