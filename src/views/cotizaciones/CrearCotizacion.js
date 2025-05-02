@@ -13,7 +13,12 @@ export default function CrearCotizacion() {
   const [fechasCuotas, setFechasCuotas] = useState([]); 
   const [showModal, setShowModal] = useState(false);  // Estado para mostrar el modal
   const [excelBlob, setExcelBlob] = useState(null);  // Estado para almacenar el blob de Excel
-  
+  const [anio, setAnio] = useState('');
+  const [mesDia, setMesDia] = useState('');
+  const [abreviadoUsuario, setAbreviadoUsuario] = useState('');
+  const [codigoCotizacion, setCodigoCotizacion] = useState('');
+  const [clienteLimpio, setClienteLimpio] = useState('');
+  const [ubicacionLimpia, setUbicacionLimpia] = useState('');
   // 🔥 Añadir estados para usuarios
   const [usuarios, setUsuarios] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
@@ -522,14 +527,41 @@ const handleGeneratePDF = (anio, mes_dia, abreviado_usuario, codigoCotizacion, c
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => {
-              // Llamar a handleGeneratePDF y pasar las variables necesarias
-              console.log('Variables a pasar:', anio, mes_dia, abreviado_usuario, codigoCotizacion, cliente_limpio, ubicacion_limpia);
+            onClick={(e) => {
+              e.preventDefault();
+
+              const clienteInput = document.querySelector('[name="cliente"]');
+              const ubicacionInput = document.querySelector('[name="ubicacion"]');
+
+              if (!clienteInput || !ubicacionInput) {
+                alert("No se encontraron los campos requeridos.");
+                return;
+              }
+
+              // Recuperar el código de cotización en este momento
+              const selectedCotizacion = cotizacion.find(c => c.id.toString() === cotizacionSeleccionado.toString());
+              const codigoCotizacion = selectedCotizacion?.codigo || 'SIN-CODIGO';
+
+              const hoy = new Date();
+              const anio = hoy.getFullYear();
+              const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+              const dia = String(hoy.getDate()).padStart(2, '0');
+              const mes_dia = `${mes}${dia}`;
+
+              const abreviado_usuario = (usuarioSeleccionado.slice(0, 3) || 'USR').toUpperCase();
+
+              const limpiar = (texto) =>
+                texto.replace(/[^a-zA-Z0-9_-]/g, '').replace(/\s+/g, '_');
+
+              const cliente_limpio = limpiar(clienteInput.value || 'Cliente');
+              const ubicacion_limpia = limpiar(ubicacionInput.value || 'Ubicacion');
+
               handleGeneratePDF(anio, mes_dia, abreviado_usuario, codigoCotizacion, cliente_limpio, ubicacion_limpia);
             }}
           >
             Sí
           </button>
+
         </div>
       </div>
     </div>
