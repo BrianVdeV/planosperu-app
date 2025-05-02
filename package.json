@@ -1,15 +1,15 @@
 {
-  "name": "@coreui/coreui-free-react-admin-template",
-  "version": "1.0.0",
-  "description": "CoreUI Free React Admin Template",
-  "homepage": ".",
-  "bugs": {
-    "url": "https://github.com/coreui/coreui-free-react-admin-template/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:coreui/coreui-free-react-admin-template.git"
-  },
+  "name": "planos-peru",         
+"version": "1.0.7",             
+"description": "Planos Peru",    
+"homepage": ".",                 
+ "bugs": {
+  "url": "https://github.com/kimberly31-HC/planosperu-app/issues"
+},
+"repository": {
+  "type": "git",
+  "url": "https://github.com/kimberly31-HC/planosperu-app.git"
+},
   "license": "MIT",
   "author": "The CoreUI Team (https://github.com/orgs/coreui/people)",
   "scripts": {
@@ -72,8 +72,9 @@
   },
   "main": "main.js",
   "build": {
-    "appId": "com.tuempresa.nombre",
-    "productName": "MiAplicacionElectron",
+    "appId": "com.miapp.planosperu",
+    "productName": "PlanosPeru",
+    "icon": "build/favicon.ico",
     "files": [
       "build/**/*",
       "main.js",
@@ -81,6 +82,14 @@
       "package.json",
       "node_modules/**/*"
     ],
+    "publish": [
+        {
+          "provider": "github",
+          "owner": "kimberly31-HC",
+          "repo": "planosperu-app",
+          "releaseType": "release"
+        }
+      ],
   "extraResources": [
     {
       "from": "./dist/app.exe",
@@ -285,13 +294,7 @@
   ],
 
     
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "kimberly31-HC",
-        "repo": "planosperu-app"
-      }
-    ],
+
     "directories": {
       "output": "dist"
     },
