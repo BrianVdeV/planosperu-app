@@ -1,6 +1,6 @@
 {
   "name": "planos-peru",         
-"version": "1.0.7",             
+"version": "1.0.15",             
 "description": "Planos Peru",    
 "homepage": ".",                 
  "bugs": {
@@ -94,6 +94,10 @@
     {
       "from": "./dist/app.exe",
       "to": "dist/app.exe"
+    },
+    {
+        "from": "./docs/Formulario Persona Natural.xlsm",
+        "to": "dist/Formulario Persona Natural.xlsm"
     },
     {
       "from": "./docs/DEC-SUB.xlsx",
