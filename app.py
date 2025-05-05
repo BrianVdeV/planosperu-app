@@ -265,50 +265,101 @@ def crear_cotizacion():
 @app.route('/formulario-persona-natural', methods=['POST'])
 def formulario_persona_natural():
     try:
+        # Obtener los datos del JSON recibido
         data = request.json
-
+        
+        # Imprimir todo el JSON recibido para ver los datos completos
+        print("Datos recibidos:", data)
+        
+        # Acceder al objeto 'ot' para obtener los datos principales
+        ot_data = data.get('ot', {})
+        
+        # Imprimir los datos del objeto 'ot'
+        print("Datos de OT:", ot_data)
+        
+        # Verificar si los datos de 'ot' están presentes
+        if not ot_data:
+            return 'Datos de OT no proporcionados', 400
+        
+        # Ruta del archivo de plantilla Excel
         ruta_formulario = obtener_ruta_absoluta('Formulario Persona Natural.xlsm')
         if not os.path.exists(ruta_formulario):
             return 'No se encontró el archivo', 400
 
+        # Inicializar la aplicación de Excel
         app_excel = xw.App(visible=False)
         libro = app_excel.books.open(ruta_formulario)
+        hoja = libro.sheets[0]  # Hoja principal
+        hoja_formulario = libro.sheets['FORMULARIO']  # Hoja de formulario
 
-        hoja = libro.sheets[0]
-        hoja_formulario = libro.sheets['FORMULARIO']
+        # Llenar los campos básicos del formulario con los datos de 'ot'
+        hoja.range('D1').value = ot_data.get('ot', '')
+        hoja.range('D2').value = ot_data.get('siglas', '')
+        hoja.range('D5').value = ot_data.get('apellidos', '')
+        hoja.range('D6').value = ot_data.get('nombres', '')
+        hoja.range('D7').value = ot_data.get('dni', '')
+        hoja.range('D8').value = ot_data.get('direccion', '')
+        hoja.range('D10').value = ot_data.get('conyugue', '')
+        hoja.range('D11').value = ot_data.get('area_m2', '')
+        hoja.range('D12').value = ot_data.get('partida_registral', '')
+        hoja.range('D13').value = ot_data.get('valor_unitario', '')
 
-        # Llenar datos
-        hoja.range('D1').value = data.get('ot', '')
-        hoja.range('D2').value = data.get('siglas', '')
-        hoja.range('D5').value = data.get('apellidos', '')
-        hoja.range('D6').value = data.get('nombres', '')
-        hoja.range('D7').value = data.get('dni', '')
-        hoja.range('D8').value = data.get('direccion', '')
-        hoja.range('D10').value = data.get('conyugue', '')
-        hoja.range('D11').value = data.get('area_m2', '')
-        hoja.range('D12').value = data.get('partida_registral', '')
-        hoja.range('D13').value = data.get('valor_unitario', '')
-
-        # === Llenar Unidades Inmobiliarias ===
-        unidades = data.get('unidades_inmobiliarias', [])
-
+        # === Llenar las Unidades Inmobiliarias ===
+        # Obtener la lista de unidades inmobiliarias
+        unidades = data.get('unidades_inmobiliaria', [])
+        
+        # Imprimir los datos de las unidades inmobiliarias
+        print("Unidades inmobiliarias:", unidades)
+        
+        # Iterar sobre cada unidad inmobiliaria y llenarlas en el formulario
         for i, unidad in enumerate(unidades):
-            offset = 8 * i  # Cada unidad inmobiliaria está separada por 8 filas
+            offset = 8 * i  # Cada unidad inmobiliaria ocupa 8 filas consecutivas
 
-            hoja_formulario.range(f'B{323 + offset}').value = unidad.get('nivel', '')
-            hoja_formulario.range(f'B{325 + offset}').value = unidad.get('uso', '')
+            # Imprimir los datos de cada unidad inmobiliaria
+            print(f"Unidad inmobiliaria {i + 1}:", unidad)
+            nivel = unidad.get('nivel', '')
+            # **UNIDAD INMOBILIARIA (Número de unidad)**
+            hoja_formulario.range(f'B{318 + offset}').value = f'UNIDAD INMOBILIARIA {nivel}'
+            hoja_formulario.range(f'B{322 + offset}').value = "NIVEL"
+            hoja_formulario.range(f'B{324 + offset}').value = "USO"
+            # **Área Ocupada**
+            hoja_formulario.range(f'D{318 + offset}').value = "ÁREA OCUPADA"
+            # **Área Techada**
+            hoja_formulario.range(f'D{320 + offset}').value = "ÁREA TECHADA"
+            # **Área Libre**
+            hoja_formulario.range(f'D{323 + offset}').value = "ÁREA LIBRE"
+            # **Por el frente**
+            hoja_formulario.range(f'F{318 + offset}').value = "Por el Frente"
+            # **Tramo(s) (Frente)**
+            hoja_formulario.range(f'G{319 + offset}').value = "TRAMO(S)"
+            # **Por la derecha**
+            hoja_formulario.range(f'F{320 + offset}').value = "Por la Derecha"
+            # **Tramo(s) (Derecha)**
+            hoja_formulario.range(f'G{321 + offset}').value = "TRAMO(S)"
+            # **Por la izquierda**
+            hoja_formulario.range(f'F{322 + offset}').value = "Por la Izquierda"
+            # **Tramo(s) (Izquierda)**
+            hoja_formulario.range(f'G{323 + offset}').value = "TRAMO(S)"
+            # **Por el fondo**
+            hoja_formulario.range(f'F{324 + offset}').value = "Por el Fondo"
+            # **Tramo(s) (Fondo)**
+            hoja_formulario.range(f'G{325 + offset}').value = "TRAMO(S)"
+
+            # Ahora llenamos los valores reales de las unidades inmobiliarias
             hoja_formulario.range(f'E{318 + offset}').value = unidad.get('area_ocupada', '')
             hoja_formulario.range(f'E{320 + offset}').value = unidad.get('area_techada', '')
-
-            # Área libre = área ocupada - área techada (si ambas están presentes y son numéricas)
+            hoja_formulario.range(f'B{323 + offset}').value = unidad.get('nivel', '')
+            hoja_formulario.range(f'B{325 + offset}').value = unidad.get('uso', '')
+            # Calcular el área libre (si el campo 'area_ocupada' y 'area_techada' están presentes y son numéricos)
             try:
                 area_ocupada = float(unidad.get('area_ocupada', 0) or 0)
                 area_techada = float(unidad.get('area_techada', 0) or 0)
                 area_libre = area_ocupada - area_techada
             except ValueError:
-                area_libre = ''
-
+                area_libre = ''  # Si no es posible calcular, dejar vacío
             hoja_formulario.range(f'E{323 + offset}').value = area_libre
+
+            # Llenar los campos del perímetro de la unidad
 
             hoja_formulario.range(f'H{318 + offset}').value = unidad.get('por_frente', '')
             hoja_formulario.range(f'H{319 + offset}').value = unidad.get('tramo_frente', '')
@@ -319,8 +370,8 @@ def formulario_persona_natural():
             hoja_formulario.range(f'H{324 + offset}').value = unidad.get('por_fondo', '')
             hoja_formulario.range(f'H{325 + offset}').value = unidad.get('tramo_fondo', '')
 
-
-        estado = data.get('estado_civil', '').lower()
+        # Asignar estado civil (casado, soltero, etc.)
+        estado = ot_data.get('estado_civil', '').lower()
         shapes = {
             'soltero': 'cbxEstado1',
             'casado': 'cbxEstado2',
@@ -329,6 +380,10 @@ def formulario_persona_natural():
             'separada juridicamente': 'cbxEstado5'
         }
 
+        # Imprimir el estado civil
+        print("Estado civil:", estado)
+
+        # Verificar cuál es el estado civil y marcarlo en el formulario
         shape_names = [s.Name for s in hoja_formulario.api.Shapes]
         for shape_name in shapes.values():
             if shape_name in shape_names:
@@ -336,8 +391,74 @@ def formulario_persona_natural():
 
         if estado in shapes and shapes[estado] in shape_names:
             hoja_formulario.api.Shapes(shapes[estado]).TextFrame.Characters().Text = "X"
+            
+        area_comun = data.get('area_comun', [])
+        
+        # Imprimir los datos de las unidades inmobiliarias
+        print("Áreas comunes:", area_comun)
 
-        # Guardar en archivo temporal
+        # Iterar sobre cada unidad inmobiliaria y llenarlas en el formulario
+        for i, comun in enumerate(area_comun):
+            offset = 8 * i  # Cada unidad inmobiliaria ocupa 8 filas consecutivas
+
+            # Imprimir los datos de cada unidad inmobiliaria
+            print(f"ÁREA COMÚN {i + 1}:", unidad)
+            nivel = comun.get('nivel', '')
+            # **UNIDAD INMOBILIARIA (Número de unidad)**
+            hoja_formulario.range(f'B{371 + offset}').value = f'ÁREA COMÚN {nivel}'
+            hoja_formulario.range(f'B{375 + offset}').value = "NIVEL"
+            hoja_formulario.range(f'B{377 + offset}').value = "USO"
+            # **Área Ocupada**
+            hoja_formulario.range(f'D{371 + offset}').value = "ÁREA OCUPADA"
+            # **Área Techada**
+            hoja_formulario.range(f'D{373 + offset}').value = "ÁREA TECHADA"
+            # **Área Libre**
+            hoja_formulario.range(f'D{376 + offset}').value = "ÁREA LIBRE"
+            # **Por el frente**
+            hoja_formulario.range(f'F{371 + offset}').value = "Por el Frente"
+            # **Tramo(s) (Frente)**
+            hoja_formulario.range(f'G{372 + offset}').value = "TRAMO (S)"
+            # **Por la derecha**
+            hoja_formulario.range(f'F{373 + offset}').value = "Por la Derecha"
+            # **Tramo(s) (Derecha)**
+            hoja_formulario.range(f'G{374 + offset}').value = "TRAMO (S)"
+            # **Por la izquierda**
+            hoja_formulario.range(f'F{375 + offset}').value = "Por la Izquierda"
+            # **Tramo(s) (Izquierda)**
+            hoja_formulario.range(f'G{376 + offset}').value = "TRAMO (S)"
+            # **Por el fondo**
+            hoja_formulario.range(f'F{377 + offset}').value = "Por el Fondo"
+            # **Tramo(s) (Fondo)**
+            hoja_formulario.range(f'G{378 + offset}').value = "TRAMO (S)"
+
+            # Ahora llenamos los valores reales de las unidades inmobiliarias
+            hoja_formulario.range(f'E{371 + offset}').value = comun.get('area_ocupada', '')
+            hoja_formulario.range(f'E{373 + offset}').value = comun.get('area_techada', '')
+            hoja_formulario.range(f'B{376 + offset}').value = comun.get('nivel', '')
+            hoja_formulario.range(f'B{378 + offset}').value = comun.get('uso', '')
+            # Calcular el área libre (si el campo 'area_ocupada' y 'area_techada' están presentes y son numéricos)
+            try:
+                area_ocupada = float(unidad.get('area_ocupada', 0) or 0)
+                area_techada = float(unidad.get('area_techada', 0) or 0)
+                area_libre = area_ocupada - area_techada
+            except ValueError:
+                area_libre = ''  # Si no es posible calcular, dejar vacío
+            hoja_formulario.range(f'E{376 + offset}').value = area_libre
+
+            # Llenar los campos del perímetro de la unidad
+
+            hoja_formulario.range(f'H{371 + offset}').value = unidad.get('por_frente', '')
+            hoja_formulario.range(f'H{372 + offset}').value = unidad.get('tramo_frente', '')
+            hoja_formulario.range(f'H{373 + offset}').value = unidad.get('por_derecha', '')
+            hoja_formulario.range(f'H{374 + offset}').value = unidad.get('tramo_derecha', '')
+            hoja_formulario.range(f'H{375 + offset}').value = unidad.get('por_izquierda', '')
+            hoja_formulario.range(f'H{376 + offset}').value = unidad.get('tramo_izquierda', '')
+            hoja_formulario.range(f'H{377 + offset}').value = unidad.get('por_fondo', '')
+            hoja_formulario.range(f'H{378 + offset}').value = unidad.get('tramo_fondo', '')
+
+
+        
+        # Guardar el archivo generado en una ruta temporal
         nombre_temporal = f"Formulario_Persona_Natural_{uuid.uuid4().hex}.xlsm"
         ruta_temporal = os.path.join(tempfile.gettempdir(), nombre_temporal)
 
@@ -345,12 +466,13 @@ def formulario_persona_natural():
         libro.close()
         app_excel.quit()
 
-        # Enviar el archivo al frontend
+        # Enviar el archivo al frontend para su descarga
         return send_file(ruta_temporal, as_attachment=True, download_name="Formulario_Persona_Natural.xlsm")
 
     except Exception as e:
         import traceback
         print(traceback.format_exc())
         return f'Error al procesar el formulario: {str(e)}', 500
+
 if __name__ == '__main__':
     app.run(port=5000)

@@ -20,7 +20,25 @@ export default function RegistrarUnidadInmobiliaria() {
       tramo_fondo: '',
     },
   ]);
+  const [formDataAreaComun, setFormDataAreaComun] = useState([
+    {
+      nivel: '',
+      uso: '',
+      area_ocupada: '',
+      area_techada: '',
+      area_libre: '',
+      por_frente: '',
+      tramo_frente: '',
+      por_derecha: '',
+      tramo_derecha: '',
+      por_izquierda: '',
+      tramo_izquierda: '',
+      por_fondo: '',
+      tramo_fondo: '',
+    },
+  ]);
   const [numPisos, setNumPisos] = useState(1);
+  const [numPisos2, setNumPisos2] = useState(1);
 
   // Añadir una nueva unidad inmobiliaria
 const handleAddUnidadInmobiliaria = () => {
@@ -43,7 +61,27 @@ const handleAddUnidadInmobiliaria = () => {
     },
   ]);
 };
-
+ // Añadir una nueva unidad inmobiliaria
+ const handleAddAreaComun = () => {
+  setFormDataAreaComun((prev) => [
+    ...prev,
+    {
+      nivel: '',
+      uso: '',
+      area_ocupada: '',
+      area_techada: '',
+      area_libre: '',
+      por_frente: '',
+      tramo_frente: '',
+      por_derecha: '',
+      tramo_derecha: '',
+      por_izquierda: '',
+      tramo_izquierda: '',
+      por_fondo: '',
+      tramo_fondo: '',
+    },
+  ]);
+};
   
   const [formDataOT, setFormDataOT] = useState({
     ot: "", // OT
@@ -51,10 +89,12 @@ const handleAddUnidadInmobiliaria = () => {
     apellidos: "", // Apellidos
     nombres: "", // Nombres
     direccion: "", // Dirección
+    valor_unitario:"",
+    partida_registral:"",
     dni: "", // DNI
     estado_civil: "", // Estado civil
-    telefono: "", // Teléfono
-    email: "", // Correo electrónico
+    area_m2:"",
+    conyugue:"",
   });
 
   const [currentStep, setCurrentStep] = useState(1); // Controla en qué paso del formulario estamos
@@ -87,6 +127,26 @@ const handleAddUnidadInmobiliaria = () => {
       return updated;
     });
   };
+  const handleChangeAreaComun = (e, index) => {
+    const { name, value } = e.target;
+  
+    setFormDataAreaComun((prev) => {
+      const updated = [...prev];
+      const areaActual = { ...updated[index], [name]: value };
+  
+      if (
+        areaActual.area_ocupada !== '' &&
+        areaActual.area_techada !== '' &&
+        !isNaN(areaActual.area_ocupada) &&
+        !isNaN(areaActual.area_techada)
+      ) {
+        areaActual.area_libre = (areaActual.area_ocupada -areaActual.area_techada).toString();
+      }
+  
+      updated[index] = areaActual;
+      return updated;
+    });
+  };
   
     
 
@@ -96,6 +156,7 @@ const handleAddUnidadInmobiliaria = () => {
     const data = {
       ot: formDataOT,
       unidades_inmobiliaria: formDataUnidadInmobiliarias,
+      area_comun:formDataAreaComun,
     };
   
     fetch("http://127.0.0.1:5000/formulario-persona-natural", {
@@ -212,10 +273,28 @@ const handleAddUnidadInmobiliaria = () => {
                   </div>
                   <div>
                     <CFormInput
+                      name="conyugue"
+                      label="Conyugue"
+                      value={formDataOT.conyugue}
+                      onChange={handleChangeOT}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <CFormInput
+                      name="direccion"
+                      label="Dirección"
+                      value={formDataOT.direccion}
+                      onChange={handleChangeOT}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <CFormInput
                       name="area_m2"
                       label="Área en m²"
                       value={formDataOT.area_m2}
-                      onChange={handleChangeUnidadInmobiliaria}
+                      onChange={handleChangeOT}
                       required
                     />
                   </div>
@@ -225,7 +304,7 @@ const handleAddUnidadInmobiliaria = () => {
                       name="partida_registral"
                       label="Partida Registral"
                       value={formDataOT.partida_registral}
-                      onChange={handleChangeUnidadInmobiliaria}
+                      onChange={handleChangeOT}
                       required
                     />
                   </div>
@@ -235,7 +314,7 @@ const handleAddUnidadInmobiliaria = () => {
                       name="valor_unitario"
                       label="Valor Unitario"
                       value={formDataOT.valor_unitario}
-                      onChange={handleChangeUnidadInmobiliaria}
+                      onChange={handleChangeOT}
                       required
                     />
                   </div>
@@ -423,13 +502,200 @@ const handleAddUnidadInmobiliaria = () => {
           </div>
         </div>
       ))}
-
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
-        <CButton color="secondary" onClick={() => setCurrentStep(1)}>
+      <CButton color="secondary" onClick={() => setCurrentStep(1)}>
           Atrás
         </CButton>
         <CButton color="primary" onClick={handleAddUnidadInmobiliaria}>
           Agregar más unidad inmobiliaria
+        </CButton>
+        <CButton color="primary" onClick={() => setCurrentStep(3)}>
+        Siguiente
+        </CButton>
+      </div>
+    </div>
+              </div>
+            )}
+
+        {currentStep === 3 && (
+              <div>
+                <div>
+                <div style={{ marginBottom: "20px" }}>
+        <CFormInput
+          type="number"
+          label="¿Cuántos pisos tiene el inmueble?"
+          min={1}
+          value={numPisos2}
+          onChange={(e) => setNumPisos2(parseInt(e.target.value) || 1)}
+          required
+        />
+      </div>
+      {formDataAreaComun.map((comun, index) => (
+        <div key={index}>
+          <strong>ÁREA COMÚN {index + 1}</strong>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "15px",
+              marginTop: "15px",
+            }}
+          >
+            <div>
+            <CFormSelect
+              name="nivel"
+              label="Nivel"
+              value={comun.nivel}
+              onChange={(e) => handleChangeAreaComun(e, index)}
+              required
+            >
+              <option value="">Seleccione un nivel</option>
+              {[...Array(numPisos)].map((_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  Piso {i + 1}
+                </option>
+              ))}
+            </CFormSelect>
+
+            </div>
+
+            <div>
+              <CFormInput
+                name="uso"
+                label="Uso"
+                value={comun.uso}
+                onChange={(e) =>handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+
+            {/* ESTE DIV OCUPA TODA LA FILA DEL GRID */}
+            <div style={{ gridColumn: "1 / -1" }}>
+              <div style={{ display: "flex", gap: "15px" }}>
+                <div style={{ flex: 1 }}>
+                  <CFormInput
+                    name="area_ocupada"
+                    label="Área Ocupada"
+                    type="number"
+                    value={comun.area_ocupada}
+                    onChange={(e) => handleChangeAreaComun(e, index)}
+                    required
+                  />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <CFormInput
+                    name="area_techada"
+                    type="number"
+                    label="Área Techada"
+                    value={comun.area_techada}
+                    onChange={(e) => handleChangeAreaComun(e, index)}
+                    required
+                  />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <CFormInput
+                    name="area_libre"
+                    label="Área Libre"
+                    type="number"
+                    value={comun.area_libre}
+                    onChange={(e) => handleChangeAreaComun(e, index)}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* CONTINÚA EN FORMATO DE 2 COLUMNAS */}
+            <div>
+              <CFormInput
+                name="por_frente"
+                label="Por el frente"
+                value={comun.por_frente}
+                onChange={(e) => handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+
+            <div>
+              <CFormInput
+                name="tramo_frente"
+                label="Tramo(s)"
+                value={comun.tramo_frente}
+                onChange={(e) => handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+
+            <div>
+              <CFormInput
+                name="por_derecha"
+                label="Por la derecha"
+                value={comun.por_derecha}
+                onChange={(e) => handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+
+            <div>
+              <CFormInput
+                name="tramo_derecha"
+                label="Tramo(s)"
+                value={comun.tramo_derecha}
+                onChange={(e) => handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+
+            <div>
+              <CFormInput
+                name="por_izquierda"
+                label="Por la izquierda"
+                value={comun.por_izquierda}
+                onChange={(e) => handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+
+            <div>
+              <CFormInput
+                name="tramo_izquierda"
+                label="Tramo(s)"
+                value={comun.tramo_izquierda}
+                onChange={(e) => handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+
+            <div>
+              <CFormInput
+                name="por_fondo"
+                label="Por el fondo"
+                value={comun.por_fondo}
+                onChange={(e) => handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+
+            <div>
+              <CFormInput
+                name="tramo_fondo"
+                label="Tramo(s)"
+                value={comun.tramo_fondo}
+                onChange={(e) => handleChangeAreaComun(e, index)}
+                required
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+        <CButton color="secondary" onClick={() => setCurrentStep(2)}>
+          Atrás
+        </CButton>
+        <CButton color="primary" onClick={handleAddAreaComun}>
+         +
         </CButton>
         <CButton type="submit" color="primary">
           Finalizar
