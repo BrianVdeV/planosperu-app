@@ -313,43 +313,46 @@ def formulario_persona_natural():
         
         # Iterar sobre cada unidad inmobiliaria y llenarlas en el formulario
         for i, unidad in enumerate(unidades):
-            offset = 8 * i  # Cada unidad inmobiliaria ocupa 8 filas consecutivas
+            if i < 6:
+                offset = 8 * i
+            else:
+                offset = (8 * i) + 2
 
             # Imprimir los datos de cada unidad inmobiliaria
             print(f"Unidad inmobiliaria {i + 1}:", unidad)
             nivel = unidad.get('nivel', '')
             # **UNIDAD INMOBILIARIA (Número de unidad)**
-            hoja_formulario.range(f'B{318 + offset}').value = f'UNIDAD INMOBILIARIA {nivel}'
-            hoja_formulario.range(f'B{322 + offset}').value = "NIVEL"
-            hoja_formulario.range(f'B{324 + offset}').value = "USO"
+            hoja_formulario.range(f'A{309 + offset}').value = f'UNIDAD INMOBILIARIA {nivel}'
+            hoja_formulario.range(f'A{313 + offset}').value = "NIVEL"
+            hoja_formulario.range(f'A{315 + offset}').value = "USO"
             # **Área Ocupada**
-            hoja_formulario.range(f'D{318 + offset}').value = "ÁREA OCUPADA"
+            hoja_formulario.range(f'D{309 + offset}').value = "ÁREA OCUPADA"
             # **Área Techada**
-            hoja_formulario.range(f'D{320 + offset}').value = "ÁREA TECHADA"
+            hoja_formulario.range(f'D{311 + offset}').value = "ÁREA TECHADA"
             # **Área Libre**
-            hoja_formulario.range(f'D{323 + offset}').value = "ÁREA LIBRE"
+            hoja_formulario.range(f'D{314 + offset}').value = "ÁREA LIBRE"
             # **Por el frente**
-            hoja_formulario.range(f'F{318 + offset}').value = "Por el Frente"
+            hoja_formulario.range(f'F{309 + offset}').value = "Por el Frente"
             # **Tramo(s) (Frente)**
-            hoja_formulario.range(f'G{319 + offset}').value = "TRAMO(S)"
+            hoja_formulario.range(f'G{310 + offset}').value = "TRAMO(S)"
             # **Por la derecha**
-            hoja_formulario.range(f'F{320 + offset}').value = "Por la Derecha"
+            hoja_formulario.range(f'F{311 + offset}').value = "Por la Derecha"
             # **Tramo(s) (Derecha)**
-            hoja_formulario.range(f'G{321 + offset}').value = "TRAMO(S)"
+            hoja_formulario.range(f'G{312 + offset}').value = "TRAMO(S)"
             # **Por la izquierda**
-            hoja_formulario.range(f'F{322 + offset}').value = "Por la Izquierda"
+            hoja_formulario.range(f'F{313 + offset}').value = "Por la Izquierda"
             # **Tramo(s) (Izquierda)**
-            hoja_formulario.range(f'G{323 + offset}').value = "TRAMO(S)"
+            hoja_formulario.range(f'G{314 + offset}').value = "TRAMO(S)"
             # **Por el fondo**
-            hoja_formulario.range(f'F{324 + offset}').value = "Por el Fondo"
+            hoja_formulario.range(f'F{315 + offset}').value = "Por el Fondo"
             # **Tramo(s) (Fondo)**
-            hoja_formulario.range(f'G{325 + offset}').value = "TRAMO(S)"
+            hoja_formulario.range(f'G{316 + offset}').value = "TRAMO(S)"
 
             # Ahora llenamos los valores reales de las unidades inmobiliarias
-            hoja_formulario.range(f'E{318 + offset}').value = unidad.get('area_ocupada', '')
-            hoja_formulario.range(f'E{320 + offset}').value = unidad.get('area_techada', '')
-            hoja_formulario.range(f'B{323 + offset}').value = unidad.get('nivel', '')
-            hoja_formulario.range(f'B{325 + offset}').value = unidad.get('uso', '')
+            hoja_formulario.range(f'E{309 + offset}').value = unidad.get('area_ocupada', '')
+            hoja_formulario.range(f'E{311 + offset}').value = unidad.get('area_techada', '')
+            hoja_formulario.range(f'A{314 + offset}').value = unidad.get('nivel', '')
+            hoja_formulario.range(f'A{316 + offset}').value = unidad.get('uso', '')
             # Calcular el área libre (si el campo 'area_ocupada' y 'area_techada' están presentes y son numéricos)
             try:
                 area_ocupada = float(unidad.get('area_ocupada', 0) or 0)
@@ -357,18 +360,18 @@ def formulario_persona_natural():
                 area_libre = area_ocupada - area_techada
             except ValueError:
                 area_libre = ''  # Si no es posible calcular, dejar vacío
-            hoja_formulario.range(f'E{323 + offset}').value = area_libre
+            hoja_formulario.range(f'E{314 + offset}').value = area_libre
 
             # Llenar los campos del perímetro de la unidad
 
-            hoja_formulario.range(f'H{318 + offset}').value = unidad.get('por_frente', '')
-            hoja_formulario.range(f'H{319 + offset}').value = unidad.get('tramo_frente', '')
-            hoja_formulario.range(f'H{320 + offset}').value = unidad.get('por_derecha', '')
-            hoja_formulario.range(f'H{321 + offset}').value = unidad.get('tramo_derecha', '')
-            hoja_formulario.range(f'H{322 + offset}').value = unidad.get('por_izquierda', '')
-            hoja_formulario.range(f'H{323 + offset}').value = unidad.get('tramo_izquierda', '')
-            hoja_formulario.range(f'H{324 + offset}').value = unidad.get('por_fondo', '')
-            hoja_formulario.range(f'H{325 + offset}').value = unidad.get('tramo_fondo', '')
+            hoja_formulario.range(f'H{309 + offset}').value = unidad.get('por_frente', '')
+            hoja_formulario.range(f'H{310 + offset}').value = unidad.get('tramo_frente', '')
+            hoja_formulario.range(f'H{311 + offset}').value = unidad.get('por_derecha', '')
+            hoja_formulario.range(f'H{312 + offset}').value = unidad.get('tramo_derecha', '')
+            hoja_formulario.range(f'H{313 + offset}').value = unidad.get('por_izquierda', '')
+            hoja_formulario.range(f'H{314 + offset}').value = unidad.get('tramo_izquierda', '')
+            hoja_formulario.range(f'H{315 + offset}').value = unidad.get('por_fondo', '')
+            hoja_formulario.range(f'H{316 + offset}').value = unidad.get('tramo_fondo', '')
 
         # Asignar estado civil (casado, soltero, etc.)
         estado = ot_data.get('estado_civil', '').lower()
@@ -399,43 +402,45 @@ def formulario_persona_natural():
 
         # Iterar sobre cada unidad inmobiliaria y llenarlas en el formulario
         for i, comun in enumerate(area_comun):
-            offset = 8 * i  # Cada unidad inmobiliaria ocupa 8 filas consecutivas
-
+            if i < 6:
+                offset = 8 * i
+            else:
+                offset = (8 * i) + 2
             # Imprimir los datos de cada unidad inmobiliaria
             print(f"ÁREA COMÚN {i + 1}:", unidad)
             nivel = comun.get('nivel', '')
             # **UNIDAD INMOBILIARIA (Número de unidad)**
-            hoja_formulario.range(f'B{371 + offset}').value = f'ÁREA COMÚN {nivel}'
-            hoja_formulario.range(f'B{375 + offset}').value = "NIVEL"
-            hoja_formulario.range(f'B{377 + offset}').value = "USO"
+            hoja_formulario.range(f'A{411 + offset}').value = f'ÁREA COMÚN {nivel}'
+            hoja_formulario.range(f'A{415 + offset}').value = "NIVEL"
+            hoja_formulario.range(f'A{417 + offset}').value = "USO"
             # **Área Ocupada**
-            hoja_formulario.range(f'D{371 + offset}').value = "ÁREA OCUPADA"
+            hoja_formulario.range(f'D{411 + offset}').value = "ÁREA OCUPADA"
             # **Área Techada**
-            hoja_formulario.range(f'D{373 + offset}').value = "ÁREA TECHADA"
+            hoja_formulario.range(f'D{413 + offset}').value = "ÁREA TECHADA"
             # **Área Libre**
-            hoja_formulario.range(f'D{376 + offset}').value = "ÁREA LIBRE"
+            hoja_formulario.range(f'D{416 + offset}').value = "ÁREA LIBRE"
             # **Por el frente**
-            hoja_formulario.range(f'F{371 + offset}').value = "Por el Frente"
+            hoja_formulario.range(f'F{411 + offset}').value = "Por el Frente"
             # **Tramo(s) (Frente)**
-            hoja_formulario.range(f'G{372 + offset}').value = "TRAMO (S)"
+            hoja_formulario.range(f'G{412 + offset}').value = "TRAMO (S)"
             # **Por la derecha**
-            hoja_formulario.range(f'F{373 + offset}').value = "Por la Derecha"
+            hoja_formulario.range(f'F{413 + offset}').value = "Por la Derecha"
             # **Tramo(s) (Derecha)**
-            hoja_formulario.range(f'G{374 + offset}').value = "TRAMO (S)"
+            hoja_formulario.range(f'G{414 + offset}').value = "TRAMO (S)"
             # **Por la izquierda**
-            hoja_formulario.range(f'F{375 + offset}').value = "Por la Izquierda"
+            hoja_formulario.range(f'F{415 + offset}').value = "Por la Izquierda"
             # **Tramo(s) (Izquierda)**
-            hoja_formulario.range(f'G{376 + offset}').value = "TRAMO (S)"
+            hoja_formulario.range(f'G{416 + offset}').value = "TRAMO (S)"
             # **Por el fondo**
-            hoja_formulario.range(f'F{377 + offset}').value = "Por el Fondo"
+            hoja_formulario.range(f'F{417 + offset}').value = "Por el Fondo"
             # **Tramo(s) (Fondo)**
-            hoja_formulario.range(f'G{378 + offset}').value = "TRAMO (S)"
+            hoja_formulario.range(f'G{418 + offset}').value = "TRAMO (S)"
 
             # Ahora llenamos los valores reales de las unidades inmobiliarias
-            hoja_formulario.range(f'E{371 + offset}').value = comun.get('area_ocupada', '')
-            hoja_formulario.range(f'E{373 + offset}').value = comun.get('area_techada', '')
-            hoja_formulario.range(f'B{376 + offset}').value = comun.get('nivel', '')
-            hoja_formulario.range(f'B{378 + offset}').value = comun.get('uso', '')
+            hoja_formulario.range(f'E{411 + offset}').value = comun.get('area_ocupada', '')
+            hoja_formulario.range(f'E{413 + offset}').value = comun.get('area_techada', '')
+            hoja_formulario.range(f'A{416 + offset}').value = comun.get('nivel', '')
+            hoja_formulario.range(f'A{418 + offset}').value = comun.get('uso', '')
             # Calcular el área libre (si el campo 'area_ocupada' y 'area_techada' están presentes y son numéricos)
             try:
                 area_ocupada = float(unidad.get('area_ocupada', 0) or 0)
@@ -443,18 +448,18 @@ def formulario_persona_natural():
                 area_libre = area_ocupada - area_techada
             except ValueError:
                 area_libre = ''  # Si no es posible calcular, dejar vacío
-            hoja_formulario.range(f'E{376 + offset}').value = area_libre
+            hoja_formulario.range(f'E{416 + offset}').value = area_libre
 
             # Llenar los campos del perímetro de la unidad
 
-            hoja_formulario.range(f'H{371 + offset}').value = unidad.get('por_frente', '')
-            hoja_formulario.range(f'H{372 + offset}').value = unidad.get('tramo_frente', '')
-            hoja_formulario.range(f'H{373 + offset}').value = unidad.get('por_derecha', '')
-            hoja_formulario.range(f'H{374 + offset}').value = unidad.get('tramo_derecha', '')
-            hoja_formulario.range(f'H{375 + offset}').value = unidad.get('por_izquierda', '')
-            hoja_formulario.range(f'H{376 + offset}').value = unidad.get('tramo_izquierda', '')
-            hoja_formulario.range(f'H{377 + offset}').value = unidad.get('por_fondo', '')
-            hoja_formulario.range(f'H{378 + offset}').value = unidad.get('tramo_fondo', '')
+            hoja_formulario.range(f'H{411 + offset}').value = unidad.get('por_frente', '')
+            hoja_formulario.range(f'H{412 + offset}').value = unidad.get('tramo_frente', '')
+            hoja_formulario.range(f'H{413 + offset}').value = unidad.get('por_derecha', '')
+            hoja_formulario.range(f'H{414 + offset}').value = unidad.get('tramo_derecha', '')
+            hoja_formulario.range(f'H{415 + offset}').value = unidad.get('por_izquierda', '')
+            hoja_formulario.range(f'H{416 + offset}').value = unidad.get('tramo_izquierda', '')
+            hoja_formulario.range(f'H{417 + offset}').value = unidad.get('por_fondo', '')
+            hoja_formulario.range(f'H{418 + offset}').value = unidad.get('tramo_fondo', '')
 
 
         

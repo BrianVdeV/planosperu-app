@@ -343,8 +343,19 @@ const handleAddUnidadInmobiliaria = () => {
         />
       </div>
       {formDataUnidadInmobiliarias.map((unidad, index) => (
-        <div key={index}>
-          <strong>UNIDAD INMOBILIARIA {index + 1}</strong>
+        <div key={index} style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <strong>Unidad Inmobiliaria</strong>
+            <CFormInput
+              name="numero_unidad"
+              type="text"
+              placeholder={`${index + 1}`}  // Colocamos un placeholder si el campo está vacío
+              value={unidad.numero_unidad || ''} // Si no tiene valor, lo mostramos vacío
+              onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}  // Manejamos el cambio de valor
+              style={{ marginLeft: '10px', width: '70px' }} // Un pequeño espacio entre el texto y el input
+              required
+            />
+          </div>
           <div
             style={{
               display: "grid",
@@ -430,16 +441,32 @@ const handleAddUnidadInmobiliaria = () => {
               />
             </div>
 
-            <div>
-              <CFormInput
-                name="tramo_frente"
-                label="Tramo(s)"
-                value={unidad.tramo_frente}
-                onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
-                required
-              />
-            </div>
+            <div style={{ display: 'flex', gap: '15px' }}>
+              {/* Input numérico a la izquierda para el tramo */}
+              <div style={{ flex: 1 }}>
+                <CFormInput
+                  type="number"
+                  name="tramo_frente_num"
+                  label="Tramo(s)"
+                  value={unidad.tramo_frente_num || ''}
+                  onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}  // Maneja el cambio del valor
+                  required
+                  placeholder="N° tramo"
+                  style={{ marginRight: '10px' }}  // Para un poco de separación entre el input numérico y el texto
+                />
+              </div>
 
+              {/* Input para el valor del tramo */}
+              <div style={{ flex: 3 }}>
+                <CFormInput
+                  name="tramo_frente"
+                  value={unidad.tramo_frente}
+                  onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
+                  required
+                  placeholder="Descripción del tramo"
+                />
+              </div>
+            </div>
             <div>
               <CFormInput
                 name="por_derecha"
@@ -450,14 +477,31 @@ const handleAddUnidadInmobiliaria = () => {
               />
             </div>
 
-            <div>
-              <CFormInput
-                name="tramo_derecha"
-                label="Tramo(s)"
-                value={unidad.tramo_derecha}
-                onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
-                required
-              />
+            <div style={{ display: 'flex', gap: '15px' }}>
+              {/* Input numérico a la izquierda para el tramo */}
+              <div style={{ flex: 1 }}>
+                <CFormInput
+                  type="number"
+                  name="tramo_derecha_num"
+                  label="Tramo(s)"
+                  value={unidad.tramo_derecha_num || ''}
+                  onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}  // Maneja el cambio del valor
+                  required
+                  placeholder="N° tramo"
+                  style={{ marginRight: '10px' }}  // Para un poco de separación entre el input numérico y el texto
+                />
+              </div>
+
+              {/* Input para el valor del tramo */}
+              <div style={{ flex: 3 }}>
+                <CFormInput
+                  name="tramo_derecha"
+                  value={unidad.tramo_derecha}
+                  onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
+                  required
+                  placeholder="Descripción del tramo"
+                />
+              </div>
             </div>
 
             <div>
@@ -470,14 +514,31 @@ const handleAddUnidadInmobiliaria = () => {
               />
             </div>
 
-            <div>
-              <CFormInput
-                name="tramo_izquierda"
-                label="Tramo(s)"
-                value={unidad.tramo_izquierda}
-                onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
-                required
-              />
+            <div style={{ display: 'flex', gap: '15px' }}>
+              {/* Input numérico a la izquierda para el tramo */}
+              <div style={{ flex: 1 }}>
+                <CFormInput
+                  type="number"
+                  name="tramo_izquierda_num"
+                  label="Tramo(s)"
+                  value={unidad.tramo_izquierda_num || ''}
+                  onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}  // Maneja el cambio del valor
+                  required
+                  placeholder="N° tramo"
+                  style={{ marginRight: '10px' }}  // Para un poco de separación entre el input numérico y el texto
+                />
+              </div>
+
+              {/* Input para el valor del tramo */}
+              <div style={{ flex: 3 }}>
+                <CFormInput
+                  name="tramo_izquierda"
+                  value={unidad.tramo_izquierda}
+                  onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
+                  required
+                  placeholder="Descripción del tramo"
+                />
+              </div>
             </div>
 
             <div>
@@ -490,31 +551,48 @@ const handleAddUnidadInmobiliaria = () => {
               />
             </div>
 
-            <div>
-              <CFormInput
-                name="tramo_fondo"
-                label="Tramo(s)"
-                value={unidad.tramo_fondo}
-                onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
-                required
-              />
+            <div style={{ display: 'flex', gap: '15px' }}>
+              {/* Input numérico a la izquierda para el tramo */}
+              <div style={{ flex: 1 }}>
+                <CFormInput
+                  type="number"
+                  name="tramo_fondo_num"
+                  label="Tramo(s)"
+                  value={unidad.tramo_fondo_num || ''}
+                  onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}  // Maneja el cambio del valor
+                  required
+                  placeholder="N° tramo"
+                  style={{ marginRight: '10px' }}  // Para un poco de separación entre el input numérico y el texto
+                />
+              </div>
+
+              {/* Input para el valor del tramo */}
+              <div style={{ flex: 3 }}>
+                <CFormInput
+                  name="tramo_fondo"
+                  value={unidad.tramo_fondo}
+                  onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
+                  required
+                  placeholder="Descripción del tramo"
+                />
+              </div>
             </div>
           </div>
         </div>
       ))}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
-      <CButton color="secondary" onClick={() => setCurrentStep(1)}>
-          Atrás
-        </CButton>
-        <CButton color="primary" onClick={handleAddUnidadInmobiliaria}>
-          Agregar más unidad inmobiliaria
-        </CButton>
-        <CButton color="primary" onClick={() => setCurrentStep(3)}>
-        Siguiente
-        </CButton>
-      </div>
-    </div>
+              <CButton color="secondary" onClick={() => setCurrentStep(1)}>
+                  Atrás
+                </CButton>
+                <CButton color="primary" onClick={handleAddUnidadInmobiliaria}>
+                  +
+                </CButton>
+                <CButton color="primary" onClick={() => setCurrentStep(3)}>
+                Siguiente
+                </CButton>
               </div>
+            </div>
+          </div>
             )}
 
         {currentStep === 3 && (
@@ -550,7 +628,7 @@ const handleAddUnidadInmobiliaria = () => {
               required
             >
               <option value="">Seleccione un nivel</option>
-              {[...Array(numPisos)].map((_, i) => (
+              {[...Array(numPisos2)].map((_, i) => (
                 <option key={i + 1} value={i + 1}>
                   Piso {i + 1}
                 </option>
