@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { CFormInput, CFormSelect, CCard, CCardBody, CCardHeader, CCol, CForm, CButton } from "@coreui/react";
+import { CFormInput, CFormSelect, CCard, CCardBody, CCardHeader, CCol, CForm, CButton,CFormCheck ,CRow} from "@coreui/react";
 import { useNavigate } from "react-router-dom";
 
 export default function RegistrarUnidadInmobiliaria() {
   const [formDataUnidadInmobiliarias, setFormDataUnidadInmobiliarias] = useState([
     {
+      numero_unidad:'',
       nivel: '',
       uso: '',
       area_ocupada: '',
@@ -12,16 +13,40 @@ export default function RegistrarUnidadInmobiliaria() {
       area_libre: '',
       por_frente: '',
       tramo_frente: '',
+      tramo_frente_num: '',
       por_derecha: '',
       tramo_derecha: '',
+      tramo_derecha_num: '',
       por_izquierda: '',
       tramo_izquierda: '',
+      tramo_izquierda_num: '',
       por_fondo: '',
       tramo_fondo: '',
+      tramo_fondo_num: '',
     },
   ]);
+  const [nivelSeleccionado, setNivelSeleccionado] = useState("");
+
+  // Función para manejar el cambio de la cantidad de pisos
+  const handleNivelEspecialChange = (e) => {
+    const { name, checked } = e.target;
+    setNivelesEspeciales((prevState) => ({
+      ...prevState,
+      [name]: checked,
+    }));
+  };
+// Función para manejar el cambio de la cantidad de pisos
+const handleNivelEspecial2Change = (e) => {
+  const { name, checked } = e.target;
+  setNivelesEspeciales2((prevState) => ({
+    ...prevState,
+    [name]: checked,
+  }));
+};
+
   const [formDataAreaComun, setFormDataAreaComun] = useState([
     {
+      numero_unidad:'',
       nivel: '',
       uso: '',
       area_ocupada: '',
@@ -29,22 +54,36 @@ export default function RegistrarUnidadInmobiliaria() {
       area_libre: '',
       por_frente: '',
       tramo_frente: '',
+      tramo_frente_num: '',
       por_derecha: '',
       tramo_derecha: '',
+      tramo_derecha_num: '',
       por_izquierda: '',
       tramo_izquierda: '',
+      tramo_izquierda_num: '',
       por_fondo: '',
       tramo_fondo: '',
+      tramo_fondo_num: '',
     },
   ]);
   const [numPisos, setNumPisos] = useState(1);
   const [numPisos2, setNumPisos2] = useState(1);
-
+  const [nivelesEspeciales, setNivelesEspeciales] = useState({
+    azotea: false,
+    sotano: false,
+    semisotano: false,
+  }); // Estado para los checkboxes de niveles especiales
+  const [nivelesEspeciales2, setNivelesEspeciales2] = useState({
+    azotea: false,
+    sotano: false,
+    semisotano: false,
+  }); // Estado para los checkboxes de niveles especiales
   // Añadir una nueva unidad inmobiliaria
 const handleAddUnidadInmobiliaria = () => {
   setFormDataUnidadInmobiliarias((prev) => [
     ...prev,
     {
+      numero_unidad:'',
       nivel: '',
       uso: '',
       area_ocupada: '',
@@ -52,12 +91,16 @@ const handleAddUnidadInmobiliaria = () => {
       area_libre: '',
       por_frente: '',
       tramo_frente: '',
+      tramo_frente_num: '',
       por_derecha: '',
       tramo_derecha: '',
+      tramo_derecha_num: '',
       por_izquierda: '',
       tramo_izquierda: '',
+      tramo_izquierda_num: '',
       por_fondo: '',
       tramo_fondo: '',
+      tramo_fondo_num: '',
     },
   ]);
 };
@@ -66,6 +109,7 @@ const handleAddUnidadInmobiliaria = () => {
   setFormDataAreaComun((prev) => [
     ...prev,
     {
+      numero_unidad:'',
       nivel: '',
       uso: '',
       area_ocupada: '',
@@ -73,12 +117,16 @@ const handleAddUnidadInmobiliaria = () => {
       area_libre: '',
       por_frente: '',
       tramo_frente: '',
+      tramo_frente_num: '',
       por_derecha: '',
       tramo_derecha: '',
+      tramo_derecha_num: '',
       por_izquierda: '',
       tramo_izquierda: '',
+      tramo_izquierda_num: '',
       por_fondo: '',
       tramo_fondo: '',
+      tramo_fondo_num: '',
     },
   ]);
 };
@@ -332,16 +380,50 @@ const handleAddUnidadInmobiliaria = () => {
             {currentStep === 2 && (
               <div>
                 <div>
-                <div style={{ marginBottom: "20px" }}>
-        <CFormInput
-          type="number"
-          label="¿Cuántos pisos tiene el inmueble?"
-          min={1}
-          value={numPisos}
-          onChange={(e) => setNumPisos(parseInt(e.target.value) || 1)}
-          required
-        />
-      </div>
+                <CRow style={{ marginBottom: "20px" }}>
+                  <CCol xs={12} md={6}>
+                    {/* Input para preguntar cuántos pisos tiene el inmueble */}
+                    <CFormInput
+                      type="number"
+                      label="¿Cuántos pisos tiene el inmueble?"
+                      min={1}
+                      value={numPisos}
+                      onChange={(e) => setNumPisos(parseInt(e.target.value) || 1)}
+                      required
+                    />
+                  </CCol>
+
+                  <CCol xs={12} md={6}>
+                    {/* Checkboxes para Azotea, Sótano, y Semisótano */}
+                    <div>
+                      <CFormCheck
+                        type="checkbox"
+                        id="azotea"
+                        name="azotea"
+                        label="Azotea"
+                        checked={nivelesEspeciales.azotea}
+                        onChange={handleNivelEspecialChange}
+                      />
+                      <CFormCheck
+                        type="checkbox"
+                        id="sotano"
+                        name="sotano"
+                        label="Sótano"
+                        checked={nivelesEspeciales.sotano}
+                        onChange={handleNivelEspecialChange}
+                      />
+                      <CFormCheck
+                        type="checkbox"
+                        id="semisotano"
+                        name="semisotano"
+                        label="Semisótano"
+                        checked={nivelesEspeciales.semisotano}
+                        onChange={handleNivelEspecialChange}
+                      />
+                    </div>
+                  </CCol>
+                </CRow>
+          
       {formDataUnidadInmobiliarias.map((unidad, index) => (
         <div key={index} style={{ marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -365,23 +447,38 @@ const handleAddUnidadInmobiliaria = () => {
             }}
           >
             <div>
-            <CFormSelect
-              name="nivel"
-              label="Nivel"
-              value={unidad.nivel}
-              onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
-              required
-            >
-              <option value="">Seleccione un nivel</option>
-              {[...Array(numPisos)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  Piso {i + 1}
-                </option>
-              ))}
-            </CFormSelect>
+        <CFormSelect
+          name="nivel"
+          label="Nivel"
+          value={unidad.nivel}
+          onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
+          required
+        >
+          <option value="">Seleccione un nivel</option>
 
-            </div>
+          {/* Mapeamos los pisos normales */}
+          {[...Array(numPisos)].map((_, i) => (
+            <option key={i + 1} value={i + 1}>
+              Piso {i + 1}
+            </option>
+          ))}
 
+          {/* Si el inmueble tiene azotea, la añadimos como opción */}
+          {nivelesEspeciales.azotea && (
+            <option value="azotea">Azotea</option>
+          )}
+
+          {/* Si el inmueble tiene sótano, la añadimos como opción */}
+          {nivelesEspeciales.sotano && (
+            <option value="sotano">Sótano</option>
+          )}
+
+          {/* Si el inmueble tiene semisótano, la añadimos como opción */}
+          {nivelesEspeciales.semisotano && (
+            <option value="semisotano">Semisótano</option>
+          )}
+        </CFormSelect>
+      </div>
             <div>
               <CFormInput
                 name="uso"
@@ -403,6 +500,7 @@ const handleAddUnidadInmobiliaria = () => {
                     value={unidad.area_ocupada}
                     onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
                     required
+                    step="0.01"
                   />
                 </div>
 
@@ -414,6 +512,7 @@ const handleAddUnidadInmobiliaria = () => {
                     value={unidad.area_techada}
                     onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
                     required
+                    step="0.01"
                   />
                 </div>
 
@@ -425,6 +524,7 @@ const handleAddUnidadInmobiliaria = () => {
                     value={unidad.area_libre}
                     onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
                     required
+                    step="0.01"
                   />
                 </div>
               </div>
@@ -460,6 +560,7 @@ const handleAddUnidadInmobiliaria = () => {
               <div style={{ flex: 3 }}>
                 <CFormInput
                   name="tramo_frente"
+                  label=" "
                   value={unidad.tramo_frente}
                   onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
                   required
@@ -496,6 +597,7 @@ const handleAddUnidadInmobiliaria = () => {
               <div style={{ flex: 3 }}>
                 <CFormInput
                   name="tramo_derecha"
+                  label=" "
                   value={unidad.tramo_derecha}
                   onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
                   required
@@ -533,6 +635,7 @@ const handleAddUnidadInmobiliaria = () => {
               <div style={{ flex: 3 }}>
                 <CFormInput
                   name="tramo_izquierda"
+                  label=" "
                   value={unidad.tramo_izquierda}
                   onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
                   required
@@ -570,6 +673,7 @@ const handleAddUnidadInmobiliaria = () => {
               <div style={{ flex: 3 }}>
                 <CFormInput
                   name="tramo_fondo"
+                   label=" "
                   value={unidad.tramo_fondo}
                   onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
                   required
@@ -598,19 +702,64 @@ const handleAddUnidadInmobiliaria = () => {
         {currentStep === 3 && (
               <div>
                 <div>
-                <div style={{ marginBottom: "20px" }}>
-        <CFormInput
-          type="number"
-          label="¿Cuántos pisos tiene el inmueble?"
-          min={1}
-          value={numPisos2}
-          onChange={(e) => setNumPisos2(parseInt(e.target.value) || 1)}
-          required
-        />
-      </div>
+                <CRow style={{ marginBottom: "20px" }}>
+                  <CCol xs={12} md={6}>
+                    {/* Input para preguntar cuántos pisos tiene el inmueble */}
+                    <CFormInput
+                      type="number"
+                      label="¿Cuántos pisos tiene el inmueble?"
+                      min={1}
+                      value={numPisos2}
+                      onChange={(e) => setNumPisos2(parseInt(e.target.value) || 1)}
+                      required
+                    />
+                  </CCol>
+
+                  <CCol xs={12} md={6}>
+                    {/* Checkboxes para Azotea, Sótano, y Semisótano */}
+                    <div>
+                      <CFormCheck
+                        type="checkbox"
+                        id="azotea"
+                        name="azotea"
+                        label="Azotea"
+                        checked={nivelesEspeciales2.azotea}
+                        onChange={handleNivelEspecial2Change}
+                      />
+                      <CFormCheck
+                        type="checkbox"
+                        id="sotano"
+                        name="sotano"
+                        label="Sótano"
+                        checked={nivelesEspeciales2.sotano}
+                        onChange={handleNivelEspecial2Change}
+                      />
+                      <CFormCheck
+                        type="checkbox"
+                        id="semisotano"
+                        name="semisotano"
+                        label="Semisótano"
+                        checked={nivelesEspeciales2.semisotano}
+                        onChange={handleNivelEspecial2Change}
+                      />
+                    </div>
+                  </CCol>
+                </CRow>
+
       {formDataAreaComun.map((comun, index) => (
-        <div key={index}>
-          <strong>ÁREA COMÚN {index + 1}</strong>
+          <div key={index} style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <strong>ÁREA COMÚN</strong>
+            <CFormInput
+              name="numero_unidad"
+              type="text"
+              placeholder={`${index + 1}`}  // Colocamos un placeholder si el campo está vacío
+              value={comun.numero_unidad || ''} // Si no tiene valor, lo mostramos vacío
+              onChange={(e) => handleChangeAreaComun(e, index)}  // Manejamos el cambio de valor
+              style={{ marginLeft: '10px', width: '70px' }} // Un pequeño espacio entre el texto y el input
+              required
+            />
+          </div>
           <div
             style={{
               display: "grid",
@@ -620,22 +769,39 @@ const handleAddUnidadInmobiliaria = () => {
             }}
           >
             <div>
-            <CFormSelect
-              name="nivel"
-              label="Nivel"
-              value={comun.nivel}
-              onChange={(e) => handleChangeAreaComun(e, index)}
-              required
-            >
-              <option value="">Seleccione un nivel</option>
-              {[...Array(numPisos2)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  Piso {i + 1}
-                </option>
-              ))}
-            </CFormSelect>
+        <CFormSelect
+          name="nivel"
+          label="Nivel"
+          value={comun.nivel}
+          onChange={(e) => handleChangeAreaComun(e, index)}
+          required
+        >
+          <option value="">Seleccione un nivel</option>
 
-            </div>
+          {/* Mapeamos los pisos normales */}
+          {[...Array(numPisos2)].map((_, i) => (
+            <option key={i + 1} value={i + 1}>
+              Piso {i + 1}
+            </option>
+          ))}
+
+          {/* Si el inmueble tiene azotea, la añadimos como opción */}
+          {nivelesEspeciales2.azotea && (
+            <option value="azotea">Azotea</option>
+          )}
+
+          {/* Si el inmueble tiene sótano, la añadimos como opción */}
+          {nivelesEspeciales2.sotano && (
+            <option value="sotano">Sótano</option>
+          )}
+
+          {/* Si el inmueble tiene semisótano, la añadimos como opción */}
+          {nivelesEspeciales2.semisotano && (
+            <option value="semisotano">Semisótano</option>
+          )}
+        </CFormSelect>
+      </div>
+
 
             <div>
               <CFormInput
@@ -658,6 +824,7 @@ const handleAddUnidadInmobiliaria = () => {
                     value={comun.area_ocupada}
                     onChange={(e) => handleChangeAreaComun(e, index)}
                     required
+                    step="0.01"
                   />
                 </div>
 
@@ -669,6 +836,7 @@ const handleAddUnidadInmobiliaria = () => {
                     value={comun.area_techada}
                     onChange={(e) => handleChangeAreaComun(e, index)}
                     required
+                    step="0.01"
                   />
                 </div>
 
@@ -680,6 +848,7 @@ const handleAddUnidadInmobiliaria = () => {
                     value={comun.area_libre}
                     onChange={(e) => handleChangeAreaComun(e, index)}
                     required
+                    step="0.01"
                   />
                 </div>
               </div>
@@ -695,17 +864,33 @@ const handleAddUnidadInmobiliaria = () => {
                 required
               />
             </div>
+            <div style={{ display: 'flex', gap: '15px' }}>
+              {/* Input numérico a la izquierda para el tramo */}
+              <div style={{ flex: 1 }}>
+                <CFormInput
+                  type="number"
+                  name="tramo_frente_num"
+                  label="Tramo(s)"
+                  value={comun.tramo_frente_num || ''}
+                  onChange={(e) => handleChangeAreaComun(e, index)}
+                  required
+                  placeholder="N° tramo"
+                  style={{ marginRight: '10px' }}  // Para un poco de separación entre el input numérico y el texto
+                />
+              </div>
 
-            <div>
-              <CFormInput
-                name="tramo_frente"
-                label="Tramo(s)"
-                value={comun.tramo_frente}
-                onChange={(e) => handleChangeAreaComun(e, index)}
-                required
-              />
+              {/* Input para el valor del tramo */}
+              <div style={{ flex: 3 }}>
+                <CFormInput
+                  name="tramo_frente"
+                  label=" "
+                  value={comun.tramo_frente}
+                  onChange={(e) => handleChangeAreaComun(e, index)}
+                  required
+                  placeholder="Descripción del tramo"
+                />
+              </div>
             </div>
-
             <div>
               <CFormInput
                 name="por_derecha"
@@ -716,16 +901,33 @@ const handleAddUnidadInmobiliaria = () => {
               />
             </div>
 
-            <div>
-              <CFormInput
-                name="tramo_derecha"
-                label="Tramo(s)"
-                value={comun.tramo_derecha}
-                onChange={(e) => handleChangeAreaComun(e, index)}
-                required
-              />
-            </div>
+            <div style={{ display: 'flex', gap: '15px' }}>
+              {/* Input numérico a la izquierda para el tramo */}
+              <div style={{ flex: 1 }}>
+                <CFormInput
+                  type="number"
+                  name="tramo_derecha_num"
+                  label="Tramo(s)"
+                  value={comun.tramo_derecha_num || ''}
+                  onChange={(e) => handleChangeAreaComun(e, index)}
+                  required
+                  placeholder="N° tramo"
+                  style={{ marginRight: '10px' }}  // Para un poco de separación entre el input numérico y el texto
+                />
+              </div>
 
+              {/* Input para el valor del tramo */}
+              <div style={{ flex: 3 }}>
+                <CFormInput
+                  name="tramo_derecha"
+                  label=" "
+                  value={comun.tramo_derecha}
+                  onChange={(e) => handleChangeAreaComun(e, index)}
+                  required
+                  placeholder="Descripción del tramo"
+                />
+              </div>
+            </div>
             <div>
               <CFormInput
                 name="por_izquierda"
@@ -736,14 +938,32 @@ const handleAddUnidadInmobiliaria = () => {
               />
             </div>
 
-            <div>
-              <CFormInput
-                name="tramo_izquierda"
-                label="Tramo(s)"
-                value={comun.tramo_izquierda}
-                onChange={(e) => handleChangeAreaComun(e, index)}
-                required
-              />
+            <div style={{ display: 'flex', gap: '15px' }}>
+              {/* Input numérico a la izquierda para el tramo */}
+              <div style={{ flex: 1 }}>
+                <CFormInput
+                  type="number"
+                  name="tramo_izquierda_num"
+                  label="Tramo(s)"
+                  value={comun.tramo_izquierda_num || ''}
+                  onChange={(e) => handleChangeAreaComun(e, index)}
+                  required
+                  placeholder="N° tramo"
+                  style={{ marginRight: '10px' }}  // Para un poco de separación entre el input numérico y el texto
+                />
+              </div>
+
+              {/* Input para el valor del tramo */}
+              <div style={{ flex: 3 }}>
+                <CFormInput
+                  name="tramo_izquierda"
+                  label=" "
+                  value={comun.tramo_izquierda}
+                  onChange={(e) => handleChangeAreaComun(e, index)}
+                  required
+                  placeholder="Descripción del tramo"
+                />
+              </div>
             </div>
 
             <div>
@@ -756,14 +976,32 @@ const handleAddUnidadInmobiliaria = () => {
               />
             </div>
 
-            <div>
-              <CFormInput
-                name="tramo_fondo"
-                label="Tramo(s)"
-                value={comun.tramo_fondo}
-                onChange={(e) => handleChangeAreaComun(e, index)}
-                required
-              />
+            <div style={{ display: 'flex', gap: '15px' }}>
+              {/* Input numérico a la izquierda para el tramo */}
+              <div style={{ flex: 1 }}>
+                <CFormInput
+                  type="number"
+                  name="tramo_fondo_num"
+                  label="Tramo(s)"
+                  value={comun.tramo_fondo_num || ''}
+                  onChange={(e) => handleChangeAreaComun(e, index)}
+                  required
+                  placeholder="N° tramo"
+                  style={{ marginRight: '10px' }}  // Para un poco de separación entre el input numérico y el texto
+                />
+              </div>
+
+              {/* Input para el valor del tramo */}
+              <div style={{ flex: 3 }}>
+                <CFormInput
+                  name="tramo_fondo"
+                  label=" "
+                  value={comun.tramo_fondo}
+                  onChange={(e) => handleChangeAreaComun(e, index)}
+                  required
+                  placeholder="Descripción del tramo"
+                />
+              </div>
             </div>
           </div>
         </div>
