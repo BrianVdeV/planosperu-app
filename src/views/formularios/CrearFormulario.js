@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CFormInput, CFormSelect, CCard, CCardBody, CCardHeader, CCol, CForm, CButton,CFormCheck ,CRow} from "@coreui/react";
+import { CFormInput, CFormSelect, CCard, CCardBody, CCardHeader, CCol, CForm, CButton,CFormCheck ,CRow,CFormLabel} from "@coreui/react";
 import { useNavigate } from "react-router-dom";
 
 export default function RegistrarUnidadInmobiliaria() {
@@ -25,7 +25,6 @@ export default function RegistrarUnidadInmobiliaria() {
       tramo_fondo_num: '',
     },
   ]);
-  const [nivelSeleccionado, setNivelSeleccionado] = useState("");
 
   // Función para manejar el cambio de la cantidad de pisos
   const handleNivelEspecialChange = (e) => {
@@ -43,6 +42,7 @@ const handleNivelEspecial2Change = (e) => {
     [name]: checked,
   }));
 };
+
 
   const [formDataAreaComun, setFormDataAreaComun] = useState([
     {
@@ -196,15 +196,50 @@ const handleAddUnidadInmobiliaria = () => {
     });
   };
   
-    
+  const [descripcionNiveles, setDescripcionNiveles] = useState({});
+
+  const generarNiveles = () => {
+    const niveles = [];
+    if (nivelesEspeciales.sotano) niveles.push('Sótano');
+    if (nivelesEspeciales.semisotano) niveles.push('Semisótano');
+    for (let i = 1; i <= numPisos; i++) {
+      niveles.push(`${i}° piso`);
+    }
+    if (nivelesEspeciales.azotea) niveles.push('Azotea');
+    return niveles;
+  };
+  
+  // 👇 ESTA PARTE DEBE ESTAR AQUÍ
+  const niveles = generarNiveles();
+  
+  const nivelesRenderizados = niveles.map((nivel, index) => (
+    <div key={index} style={{ marginBottom: "15px" }}>
+      <CFormLabel>{nivel} consta de:</CFormLabel>
+      <CFormInput
+        type="text"
+        placeholder="Ej: Dormitorios, sala, baño, etc."
+        value={descripcionNiveles[nivel] || ""}
+        onChange={(e) =>
+          setDescripcionNiveles({
+            ...descripcionNiveles,
+            [nivel]: e.target.value,
+          })
+        }
+      />
+    </div>
+  )); 
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
-  
+    const descripcionFormateada = Object.entries(descripcionNiveles)
+    .map(([nivel, descripcion]) => `${nivel} consta de: ${descripcion}`)
+    .join("\n"); // Usamos '\n' para agregar saltos de línea
     const data = {
       ot: formDataOT,
       unidades_inmobiliaria: formDataUnidadInmobiliarias,
       area_comun:formDataAreaComun,
+      niveles: descripcionFormateada,
     };
   
     fetch("http://127.0.0.1:5000/formulario-persona-natural", {
@@ -1013,11 +1048,36 @@ const handleAddUnidadInmobiliaria = () => {
         <CButton color="primary" onClick={handleAddAreaComun}>
          +
         </CButton>
-        <CButton type="submit" color="primary">
-          Finalizar
+        <CButton color="primary" onClick={() => setCurrentStep(4)}>
+                Siguiente
         </CButton>
       </div>
     </div>
+              </div>
+            )}
+            {currentStep === 4 && (
+              <div>
+                <strong>Datos Necesarios:</strong>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "15px",
+                    marginTop: "15px",
+                  }}
+                >
+                 {nivelesRenderizados}
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+                  <CButton color="secondary" onClick={() => setCurrentStep(3)}>
+                    Atrás
+                  </CButton>
+                  <CButton type="submit" color="primary">
+                    Finalizar
+                  </CButton>
+                </div>
               </div>
             )}
           </CForm>

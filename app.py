@@ -7,6 +7,9 @@ from datetime import datetime
 from flask_cors import CORS
 import sys
 import uuid
+import textwrap
+from collections import defaultdict
+
 app = Flask(__name__)
 CORS(app)
 
@@ -305,10 +308,14 @@ def formulario_persona_natural():
         hoja.range('D13').value = ot_data.get('valor_unitario', '')
         areas_por_nivel = {'sotano': {'ocupada': 0, 'techada': 0, 'libre': 0}, 
                           'semisotano': {'ocupada': 0, 'techada': 0, 'libre': 0}, 
-                           1: {'ocupada': 0, 'techada': 0, 'libre': 0}, 
-                           2: {'ocupada': 0, 'techada': 0, 'libre': 0}, 
-                           3: {'ocupada': 0, 'techada': 0, 'libre': 0}, 
-                           4: {'ocupada': 0, 'techada': 0, 'libre': 0},
+                           '1': {'ocupada': 0, 'techada': 0, 'libre': 0}, 
+                           '2': {'ocupada': 0, 'techada': 0, 'libre': 0}, 
+                           '3': {'ocupada': 0, 'techada': 0, 'libre': 0}, 
+                           '4': {'ocupada': 0, 'techada': 0, 'libre': 0},
+                           '5': {'ocupada': 0, 'techada': 0, 'libre': 0},
+                           '6': {'ocupada': 0, 'techada': 0, 'libre': 0},
+                           '7': {'ocupada': 0, 'techada': 0, 'libre': 0},
+                           '8': {'ocupada': 0, 'techada': 0, 'libre': 0},
                            'azotea': {'ocupada': 0, 'techada': 0, 'libre': 0}, }
         # Obtener la lista de unidades inmobiliarias
         unidades = data.get('unidades_inmobiliaria', [])
@@ -322,15 +329,24 @@ def formulario_persona_natural():
                 offset = 8 * i
             else:
                 offset = (8 * i) + 2
-            nivel = unidad.get('nivel', '')  # Asegurarse de que el nivel sea un número entero
+            nivel = unidad.get('nivel', '')
             area_ocupada = float(unidad.get('area_ocupada', 0) or 0)
             area_techada = float(unidad.get('area_techada', 0) or 0)
-            area_libre = area_ocupada - area_techada  # Calcular el área libre
-            # Sumar los valores por nivel y tipo de área
-            if nivel in areas_por_nivel:
-                areas_por_nivel[nivel]['ocupada'] += area_ocupada
-                areas_por_nivel[nivel]['techada'] += area_techada
-                areas_por_nivel[nivel]['libre'] += area_libre
+            area_libre = area_ocupada - area_techada
+
+            # ✅ Asegúrate de inicializar el nivel si no existe
+            if nivel not in areas_por_nivel:
+                areas_por_nivel[nivel] = {
+                    'ocupada': 0.0,
+                    'techada': 0.0,
+                    'libre': 0.0
+                }
+
+            # Luego sí suma
+            areas_por_nivel[nivel]['ocupada'] += area_ocupada
+            areas_por_nivel[nivel]['techada'] += area_techada
+            areas_por_nivel[nivel]['libre'] += area_libre
+
             # Imprimir los datos de cada unidad inmobiliaria
             print(f"Unidad inmobiliaria {i + 1}:", unidad)
             numero_unidad= unidad.get('numero_unidad', '')
@@ -366,7 +382,13 @@ def formulario_persona_natural():
             hoja_formulario.range(f'E{317 + offset}').value = unidad.get('area_techada', '')
             # Suponiendo que 'nivel' es un número y lo deseas concatenar con "° PISO"
             nivel = unidad.get('nivel', '') 
-            nivel_texto = f"{nivel}° PISO"
+            # Verifica si el nivel es un número entre '1' y '8'
+            if nivel in ['1', '2', '3', '4', '5', '6', '7', '8']:
+                            nivel_texto = f"{nivel}° PISO"
+            else:
+                nivel_texto = nivel.upper() 
+
+
             # Asignar el valor a la celda correspondiente en Excel
             hoja_formulario.range(f'A{320 + offset}').value = nivel_texto
             hoja_formulario.range(f'A{322 + offset}').value = unidad.get('uso', '')
@@ -428,16 +450,23 @@ def formulario_persona_natural():
             else:
                 offset = (8 * i) + 2
             
-            nivel = comun.get('nivel', '')  # Asegurarse de que el nivel sea un número entero
+            nivel = comun.get('nivel', '')
             area_ocupada = float(comun.get('area_ocupada', 0) or 0)
             area_techada = float(comun.get('area_techada', 0) or 0)
-            area_libre = area_ocupada - area_techada  # Calcular el área libre
-            
-            # Sumar los valores por nivel y tipo de área
-            if nivel in areas_por_nivel:
-                areas_por_nivel[nivel]['ocupada'] += area_ocupada
-                areas_por_nivel[nivel]['techada'] += area_techada
-                areas_por_nivel[nivel]['libre'] += area_libre
+            area_libre = area_ocupada - area_techada
+
+            # ✅ Inicializar si no existe
+            if nivel not in areas_por_nivel:
+                areas_por_nivel[nivel] = {
+                    'ocupada': 0.0,
+                    'techada': 0.0,
+                    'libre': 0.0
+                }
+
+            # Sumar
+            areas_por_nivel[nivel]['ocupada'] += area_ocupada
+            areas_por_nivel[nivel]['techada'] += area_techada
+            areas_por_nivel[nivel]['libre'] += area_libre
 
             # Imprimir los datos de cada unidad inmobiliaria
             numero_unidad= comun.get('numero_unidad', '')
@@ -472,7 +501,12 @@ def formulario_persona_natural():
             hoja_formulario.range(f'E{417 + offset}').value = comun.get('area_ocupada', '')
             hoja_formulario.range(f'E{419 + offset}').value = comun.get('area_techada', '')
             nivel = comun.get('nivel', '') 
-            nivel_texto = f"{nivel}° PISO"
+            # Verifica si el nivel es un número entre '1' y '8'
+            if nivel in ['1', '2', '3', '4', '5', '6', '7', '8']:
+                nivel_texto = f"{nivel}° PISO"
+            else:
+                nivel_texto = nivel.upper() 
+
             # Asignar el valor a la celda correspondiente en Excel
             hoja_formulario.range(f'A{422 + offset}').value = nivel_texto
             hoja_formulario.range(f'A{424 + offset}').value = comun.get('uso', '')
@@ -542,23 +576,93 @@ def formulario_persona_natural():
             fila_inicio = 215  # Fila de inicio para los datos (E215)
             for i, nivel in enumerate(niveles_presentes):
                 fila = fila_inicio + i  # Las filas se incrementan para cada nivel
-                
-                # Asignar el valor de "ocupada" en la columna E
+
+                # Columna A: nombre del nivel
+                if nivel in ['1', '2', '3', '4']:
+                    hoja_formulario.range(f'A{fila}').value = f"{nivel}°"
+                elif nivel == 'sotano':
+                    hoja_formulario.range(f'A{fila}').value = "SÓTANO"
+                elif nivel == 'semisotano':
+                    hoja_formulario.range(f'A{fila}').value = "SEMISÓTANO"
+                elif nivel == 'azotea':
+                    hoja_formulario.range(f'A{fila}').value = "AZOTEA"
+
+                # Columna E: área ocupada
                 hoja_formulario.range(f'E{fila}').value = obtener_area_ocupada(nivel)
-                
-                # Asignar el valor de "techada" en la columna G
+
+                # Columna G: área techada
                 if isinstance(areas_por_nivel.get(nivel), dict) and 'techada' in areas_por_nivel[nivel]:
                     hoja_formulario.range(f'G{fila}').value = float(areas_por_nivel[nivel]['techada'])
                 else:
                     hoja_formulario.range(f'G{fila}').value = 0.0
-                
-                # Asignar el valor de "libre" en la columna I
+
+                # Columna I: área libre
                 if isinstance(areas_por_nivel.get(nivel), dict) and 'libre' in areas_por_nivel[nivel]:
                     hoja_formulario.range(f'I{fila}').value = float(areas_por_nivel[nivel]['libre'])
                 else:
                     hoja_formulario.range(f'I{fila}').value = 0.0
 
+                # Agregar "m2" en F, H, K
+                hoja_formulario.range(f'F{fila}').value = "m2"
+                hoja_formulario.range(f'H{fila}').value = "m2"
+                hoja_formulario.range(f'K{fila}').value = "m2"
+        niveles = data.get('niveles', "")
+        lineas_niveles = niveles.split('\n')
+        fila_inicial = 239
+        fila_actual = fila_inicial  # Controla en qué fila estamos escribiendo
+        for linea in lineas_niveles:
+            if not linea.strip():
+                continue  # Omitir líneas vacías
 
+            partes = textwrap.wrap(linea, width=200)
+
+            for parte in partes:
+                hoja_formulario.range(f'A{fila_actual}').value = parte
+                fila_actual += 1  # Pasar a la siguiente fila
+
+        # Mapea cada unidad inmobiliaria con una lista de niveles
+        niveles_por_unidad = defaultdict(list)
+
+        # Agrupar niveles por unidad inmobiliaria
+        for unidad in data.get('unidades_inmobiliaria', []):
+            nivel = unidad.get('nivel', '')
+            numero_unidad = unidad.get('numero_unidad', '')
+
+            if nivel and numero_unidad:
+                niveles_por_unidad[numero_unidad].append(nivel)
+
+        # Inicializamos fila
+        fila_ui = 293
+
+        # Mostrar cada unidad inmobiliaria una vez
+        for numero_unidad, niveles in niveles_por_unidad.items():
+            niveles_mapeados = []
+            for nivel in niveles:
+                if nivel.lower() == 'sotano':
+                    niveles_mapeados.append("SÓTANO")
+                elif nivel.lower() == 'semisotano':
+                    niveles_mapeados.append("SEMISÓTANO")
+                elif nivel.lower() == 'azotea':
+                    niveles_mapeados.append("AZOTEA")
+                elif nivel.isdigit():
+                    niveles_mapeados.append(f"{nivel}°")
+                else:
+                    niveles_mapeados.append(nivel.upper())
+
+            niveles_unicos = list(dict.fromkeys(niveles_mapeados))
+
+            hoja_formulario.range(f'F{fila_ui}').value = f'UI {numero_unidad}'
+            hoja_formulario.range(f'E{fila_ui}').value = ", ".join(niveles_unicos)
+
+            # 🟦 USO asignado (G columna)
+            uso_asignado = None
+            for unidad in data.get('unidades_inmobiliaria', []):
+                if unidad.get('numero_unidad') == numero_unidad:
+                    uso_asignado = unidad.get('uso', '').upper()
+                    break
+
+            hoja_formulario.range(f'G{fila_ui}').value = uso_asignado or ''
+            fila_ui += 1
         # Guardar el archivo generado en una ruta temporal
         nombre_temporal = f"Formulario_Persona_Natural_{uuid.uuid4().hex}.xlsm"
         ruta_temporal = os.path.join(tempfile.gettempdir(), nombre_temporal)
