@@ -462,7 +462,13 @@ def formulario_persona_natural():
                     'techada': 0.0,
                     'libre': 0.0
                 }
+            fecha_terminacion = data.get('fecha_terminacion', '')  # Obtiene el valor de 'fecha_terminacion' o una cadena vacía si no existe
+            print("FECHA:", fecha_terminacion)  # Esto muestra el valor de 'fecha_terminacion'
 
+            # Asigna el valor directamente a la celda
+            hoja_formulario.range(f'J211').value = fecha_terminacion
+            propietarios = data.get('propietarios',[])
+            print("Propietarios:", propietarios)
             # Sumar
             areas_por_nivel[nivel]['ocupada'] += area_ocupada
             areas_por_nivel[nivel]['techada'] += area_techada
@@ -614,7 +620,7 @@ def formulario_persona_natural():
             if not linea.strip():
                 continue  # Omitir líneas vacías
 
-            partes = textwrap.wrap(linea, width=200)
+            partes = textwrap.wrap(linea, width=150)
 
             for parte in partes:
                 hoja_formulario.range(f'A{fila_actual}').value = parte
@@ -632,28 +638,69 @@ def formulario_persona_natural():
                 niveles_por_unidad[numero_unidad].append(nivel)
 
         # Inicializamos fila
-        fila_ui = 293
+        fila_ui = 293  # Fila de inicio para colocar los datos
+        item_number = 1  # Empezamos desde el ítem 1
 
-        # Mostrar cada unidad inmobiliaria una vez
-        for numero_unidad, niveles in niveles_por_unidad.items():
-            niveles_mapeados = []
-            for nivel in niveles:
-                if nivel.lower() == 'sotano':
-                    niveles_mapeados.append("SÓTANO")
-                elif nivel.lower() == 'semisotano':
-                    niveles_mapeados.append("SEMISÓTANO")
-                elif nivel.lower() == 'azotea':
-                    niveles_mapeados.append("AZOTEA")
-                elif nivel.isdigit():
-                    niveles_mapeados.append(f"{nivel}°")
-                else:
-                    niveles_mapeados.append(nivel.upper())
+        # Usamos un diccionario para almacenar los totales por número de unidad
+        unidades_totales = {}
+        total_area_techada = 0  # Variable para el total de todas las áreas techadas
 
-            niveles_unicos = list(dict.fromkeys(niveles_mapeados))
+        # Primero, recorrer todas las unidades para sumar el total de áreas techadas
+        for unidad in data.get('unidades_inmobiliaria', []):
+            area_techada = float(unidad.get('area_techada', 0))
+            total_area_techada += area_techada  # Sumamos el área techada de cada unidad
+            
+            numero_unidad = unidad.get('numero_unidad')
+            
+            # Si la unidad ya existe en el diccionario, sumamos los valores
+            if numero_unidad not in unidades_totales:
+                unidades_totales[numero_unidad] = {
+                    'area_techada_total': 0,
+                    'area_libre_total': 0,
+                    'niveles': set(),  # Usamos un set para evitar duplicados
+                    'propietarios': []  # Lista de propietarios para esta unidad
+                }
+            
+            # Sumamos las áreas de esta unidad
+            unidades_totales[numero_unidad]['area_techada_total'] += area_techada
+            unidades_totales[numero_unidad]['area_libre_total'] += float(unidad.get('area_libre', 0))
+            
+            # Añadimos el nivel al conjunto de niveles (para evitar duplicados)
+            unidades_totales[numero_unidad]['niveles'].add(unidad.get('nivel', '').upper())  # Usamos upper para homogeneizar
 
-            hoja_formulario.range(f'F{fila_ui}').value = f'UI {numero_unidad}'
-            hoja_formulario.range(f'E{fila_ui}').value = ", ".join(niveles_unicos)
+      # Asociar los propietarios con la unidad correspondiente
+        for propietario in data.get('propietarios', []):
+            # Verificar si el propietario tiene una unidad_inmobiliaria asignada
+            unidad_inmobiliaria = propietario.get('unidad_inmobiliaria', '').strip()
 
+            # Si unidad_inmobiliaria es "todo", el propietario es dueño de todas las unidades
+            if unidad_inmobiliaria == "todo":
+                # Recorrer todas las unidades y asignar al propietario a todas ellas
+                for numero_unidad, datos in unidades_totales.items():
+                    datos['propietarios'].append(propietario.get('propietario'))
+                combinar_filas = True
+            else:
+                # Si unidad_inmobiliaria no es "todo", asignamos al propietario solo a la unidad correspondiente
+                if unidad_inmobiliaria in unidades_totales:
+                    unidades_totales[unidad_inmobiliaria]['propietarios'].append(propietario.get('propietario'))
+                combinar_filas = False
+
+        # Ahora, mostrar las unidades y sus datos
+        for numero_unidad, datos in unidades_totales.items():
+            niveles_unicos = ", ".join(datos['niveles'])  # Niveles únicos
+            area_techada_total = datos['area_techada_total']  # Suma de áreas techadas
+            area_libre_total = datos['area_libre_total']  # Suma de áreas libres
+            
+            # Calcular el porcentaje de área techada de esta unidad con respecto al total
+            if total_area_techada > 0:
+                porcentaje_area_techada = (area_techada_total / total_area_techada) * 100
+            else:
+                porcentaje_area_techada = 0  # Si el total es 0, el porcentaje también será 0
+            
+            # Colocar los datos en la hoja
+            hoja_formulario.range(f'F{fila_ui}').value = f'UI {numero_unidad}'  # Número de unidad en la columna F
+            hoja_formulario.range(f'E{fila_ui}').value = niveles_unicos  # Niveles únicos en la columna E
+            
             # 🟦 USO asignado (G columna)
             uso_asignado = None
             for unidad in data.get('unidades_inmobiliaria', []):
@@ -661,8 +708,50 @@ def formulario_persona_natural():
                     uso_asignado = unidad.get('uso', '').upper()
                     break
 
-            hoja_formulario.range(f'G{fila_ui}').value = uso_asignado or ''
+            hoja_formulario.range(f'G{fila_ui}').value = uso_asignado or ''  # Colocamos el uso asignado en la columna G
+
+            # Colocar el área total en H y I (área techada e área libre)
+            hoja_formulario.range(f'H{fila_ui}').value = area_techada_total  # Total del área techada en la columna H
+            hoja_formulario.range(f'I{fila_ui}').value = area_libre_total  # Total del área libre en la columna I
+            fila_propietarios = 592  # Fila inicial para propietarios
+            fila_porcentaje = 592  # Fila inicial para porcentaje de participación
+            # Colocar el porcentaje de área techada en J
+            hoja_formulario.range(f'J{fila_ui}').value = round(porcentaje_area_techada, 2)  # Porcentaje en la columna J
+
+            propietarios = datos['propietarios']
+                # Si solo hay un propietario y es dueño de todas las unidades
+            if len(propietarios) == 1 and unidad_inmobiliaria == "todo":
+                hoja_formulario.range(f'C{fila_ui}').value = propietarios[0]  # Colocamos el nombre del propietario
+                # Combinamos solo las filas correspondientes a las unidades
+                hoja_formulario.range(f'C{fila_ui}:C{fila_ui + len(unidades_totales)- 1}').merge()  # Combina las celdas
+                # Colocamos el número de ítem (solo una vez)
+                hoja_formulario.range(f'A{fila_ui}:A{fila_ui + len(unidades_totales) - 1}').merge()  # Restamos 1 en el rango
+                hoja_formulario.range(f'A{fila_ui}').value = item_number  
+                 # Colocar el propietario en la columna B y el porcentaje en la columna H
+                hoja_formulario.range(f'B{fila_propietarios}').value = propietarios[0]  # Colocamos el propietario
+                hoja_formulario.range(f'H{fila_porcentaje}').value = round(porcentaje_area_techada, 2)  # Porcentaje de área techada
+
+                # Avanzamos las filas para el siguiente propietario y porcentaje
+                fila_propietarios += 2
+                fila_porcentaje += 2
+            # Si hay más de un propietario
+            elif len(propietarios) > 1:
+                for propietario in propietarios:
+                    hoja_formulario.range(f'C{fila_ui}').value = propietario  # Colocamos el nombre del propietario
+                    fila_ui += 1  # Avanzamos a la siguiente fila para el siguiente propietario
+                    # Colocar el propietario en la columna B y el porcentaje de área techada en la columna H
+                hoja_formulario.range(f'B{fila_propietarios}').value = propietario  # Colocamos el propietario
+                hoja_formulario.range(f'H{fila_porcentaje}').value = round(porcentaje_area_techada, 2)  # Colocamos el porcentaje
+
+                # Avanzamos las filas para el siguiente propietario y porcentaje
+                fila_propietarios += 2
+                fila_porcentaje += 2
+            item_number += 1  # Aumentamos el contador de ítem
+
+            # Avanzar a la siguiente fila después de colocar todos los datos de esta unidad (al final de la unidad)
             fila_ui += 1
+
+
         # Guardar el archivo generado en una ruta temporal
         nombre_temporal = f"Formulario_Persona_Natural_{uuid.uuid4().hex}.xlsm"
         ruta_temporal = os.path.join(tempfile.gettempdir(), nombre_temporal)

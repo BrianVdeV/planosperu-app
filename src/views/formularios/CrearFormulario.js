@@ -25,7 +25,7 @@ export default function RegistrarUnidadInmobiliaria() {
       tramo_fondo_num: '',
     },
   ]);
-
+const [fechaTerminacion, setFechaTerminacion] = useState(""); 
   // Función para manejar el cambio de la cantidad de pisos
   const handleNivelEspecialChange = (e) => {
     const { name, checked } = e.target;
@@ -42,6 +42,23 @@ const handleNivelEspecial2Change = (e) => {
     [name]: checked,
   }));
 };
+const [cantidadPropietarios, setCantidadPropietarios] = useState(1); // Inicializamos con 1 propietario
+const [propietarios, setPropietarios] = useState([]); // Para almacenar los nombres de los propietarios
+const [unidadesPorPropietario, setUnidadesPorPropietario] = useState([]); // Para almacenar las unidades inmobiliarias por propietario
+
+// Manejo de cambios en el nombre del propietario
+const handlePropietarioChange = (e, index) => {
+  const newPropietarios = [...propietarios];
+  newPropietarios[index] = e.target.value;  // Actualiza el propietario
+  setPropietarios(newPropietarios);
+};
+
+const handleUnidadChange = (e, index) => {
+  const newUnidades = [...unidadesPorPropietario];
+  newUnidades[index] = e.target.value;  // Actualiza la unidad inmobiliaria
+  setUnidadesPorPropietario(newUnidades);
+};
+
 
 
   const [formDataAreaComun, setFormDataAreaComun] = useState([
@@ -232,6 +249,15 @@ const handleAddUnidadInmobiliaria = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Generar un array de objetos con el nombre y unidad de cada propietario
+  const propietariosYUnidades = propietarios.map((nombre, index) => ({
+      propietario: nombre,
+      unidad_inmobiliaria: cantidadPropietarios === 1 ? "todo" : (unidadesPorPropietario[index] || ""),
+    }));
+  
+    // Enviar un array con los propietarios, incluso si hay un solo propietario
+    const propietariosFinales = propietariosYUnidades;  // Enviamos siempre como array, incluso si hay uno solo
+
     const descripcionFormateada = Object.entries(descripcionNiveles)
     .map(([nivel, descripcion]) => `${nivel} consta de: ${descripcion}`)
     .join("\n"); // Usamos '\n' para agregar saltos de línea
@@ -240,6 +266,8 @@ const handleAddUnidadInmobiliaria = () => {
       unidades_inmobiliaria: formDataUnidadInmobiliarias,
       area_comun:formDataAreaComun,
       niveles: descripcionFormateada,
+       fecha_terminacion: fechaTerminacion, 
+       propietarios: propietariosFinales, 
     };
   
     fetch("http://127.0.0.1:5000/formulario-persona-natural", {
@@ -1055,31 +1083,209 @@ const handleAddUnidadInmobiliaria = () => {
     </div>
               </div>
             )}
-            {currentStep === 4 && (
-              <div>
-                <strong>Datos Necesarios:</strong>
+           {currentStep === 4 && (
+  <div>
+    <strong>Datos Necesarios:</strong>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "15px",
-                    marginTop: "15px",
-                  }}
-                >
-                 {nivelesRenderizados}
-                </div>
+    {/* Sección para Fecha de terminación de la construcción */}
+    <div>
+      <label>Fecha de terminación de la construcción:</label>
+      <input
+        type="date"
+        value={fechaTerminacion} // Asegúrate de usar un estado para manejar el valor
+        onChange={(e) => setFechaTerminacion(e.target.value)} // Actualiza el valor con el setter
+        style={{
+          padding: "10px",
+          width: "100%",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+          marginTop: "10px",
+        }}
+      />
+    </div>
 
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
-                  <CButton color="secondary" onClick={() => setCurrentStep(3)}>
-                    Atrás
-                  </CButton>
-                  <CButton type="submit" color="primary">
-                    Finalizar
-                  </CButton>
-                </div>
-              </div>
-            )}
+    {/* Sección para Propietarios */}
+    <div style={{ marginTop: "20px" }}>
+      <label>Cantidad de Propietarios:</label>
+      <input
+        type="number"
+        min="1"
+        value={cantidadPropietarios} // Estado para la cantidad de propietarios
+        onChange={(e) => setCantidadPropietarios(e.target.value)} // Actualiza la cantidad de propietarios
+        style={{
+          padding: "10px",
+          width: "100%",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+          marginTop: "10px",
+        }}
+      />
+      {/* Mostrar campos para ingresar la información de los propietarios */}
+     {Array.from({ length: cantidadPropietarios }).map((_, index) => (
+  <div key={index} style={{ marginTop: "10px", display: "flex", alignItems: "center" }}>
+    <div style={{ flex: 1 }}>
+      <label>Propietario {index + 1}:</label>
+      <input
+        type="text"
+        value={propietarios[index] || ""} // Estado para manejar cada propietario
+        onChange={(e) => handlePropietarioChange(e, index)} // Actualiza el nombre del propietario
+        placeholder={`Nombre del propietario ${index + 1}`}
+        style={{
+          padding: "10px",
+          width: "100%",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+          marginTop: "10px",
+        }}
+      />
+    </div>
+
+    {/* Input para la Unidad Inmobiliaria correspondiente, solo si hay más de un propietario */}
+    {cantidadPropietarios > 1 && (
+      <div style={{ marginLeft: "10px", flex: 1 }}>
+        <label>Unidad Inmobiliaria:</label>
+        <input
+          type="number"
+          value={unidadesPorPropietario[index] || ""} // Estado para manejar la unidad inmobiliaria de cada propietario
+          onChange={(e) => handleUnidadChange(e, index)} // Actualiza la unidad inmobiliaria
+          placeholder={`Unidad Inmobiliaria`}
+          style={{
+            padding: "10px",
+            width: "100%",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+            marginTop: "10px",
+          }}
+        />
+      </div>
+    )}
+  </div>
+))}
+    </div>
+    {/* Resto de la interfaz de usuario */}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "15px",
+        marginTop: "15px",
+      }}
+    >
+      {nivelesRenderizados}
+    </div>
+
+    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+      <CButton color="secondary" onClick={() => setCurrentStep(3)}>
+        Atrás
+      </CButton>
+        <CButton color="primary" onClick={() => setCurrentStep(5)}>
+                Siguiente
+        </CButton>
+    </div>
+  </div>
+)}
+
+ {currentStep === 4 && (
+  <div>
+    <strong>Datos Necesarios:</strong>
+
+    {/* Sección para Fecha de terminación de la construcción */}
+    <div>
+      <label>Fecha de terminación de la construcción:</label>
+      <input
+        type="date"
+        value={fechaTerminacion} // Asegúrate de usar un estado para manejar el valor
+        onChange={(e) => setFechaTerminacion(e.target.value)} // Actualiza el valor con el setter
+        style={{
+          padding: "10px",
+          width: "100%",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+          marginTop: "10px",
+        }}
+      />
+    </div>
+
+    {/* Sección para Propietarios */}
+    <div style={{ marginTop: "20px" }}>
+      <label>Cantidad de Propietarios:</label>
+      <input
+        type="number"
+        min="1"
+        value={cantidadPropietarios} // Estado para la cantidad de propietarios
+        onChange={(e) => setCantidadPropietarios(e.target.value)} // Actualiza la cantidad de propietarios
+        style={{
+          padding: "10px",
+          width: "100%",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+          marginTop: "10px",
+        }}
+      />
+      {/* Mostrar campos para ingresar la información de los propietarios */}
+     {Array.from({ length: cantidadPropietarios }).map((_, index) => (
+  <div key={index} style={{ marginTop: "10px", display: "flex", alignItems: "center" }}>
+    <div style={{ flex: 1 }}>
+      <label>Propietario {index + 1}:</label>
+      <input
+        type="text"
+        value={propietarios[index] || ""} // Estado para manejar cada propietario
+        onChange={(e) => handlePropietarioChange(e, index)} // Actualiza el nombre del propietario
+        placeholder={`Nombre del propietario ${index + 1}`}
+        style={{
+          padding: "10px",
+          width: "100%",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+          marginTop: "10px",
+        }}
+      />
+    </div>
+
+    {/* Input para la Unidad Inmobiliaria correspondiente, solo si hay más de un propietario */}
+    {cantidadPropietarios > 1 && (
+      <div style={{ marginLeft: "10px", flex: 1 }}>
+        <label>Unidad Inmobiliaria:</label>
+        <input
+          type="number"
+          value={unidadesPorPropietario[index] || ""} // Estado para manejar la unidad inmobiliaria de cada propietario
+          onChange={(e) => handleUnidadChange(e, index)} // Actualiza la unidad inmobiliaria
+          placeholder={`Unidad Inmobiliaria`}
+          style={{
+            padding: "10px",
+            width: "100%",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+            marginTop: "10px",
+          }}
+        />
+      </div>
+    )}
+  </div>
+))}
+    </div>
+    {/* Resto de la interfaz de usuario */}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "15px",
+        marginTop: "15px",
+      }}
+    >
+      {nivelesRenderizados}
+    </div>
+
+    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+      <CButton color="secondary" onClick={() => setCurrentStep(3)}>
+        Atrás
+      </CButton>
+      <CButton type="submit" color="primary">
+        Finalizar
+      </CButton>
+    </div>
+  </div>
+)}
           </CForm>
         </CCardBody>
       </CCard>
