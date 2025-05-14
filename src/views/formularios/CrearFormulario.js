@@ -25,6 +25,12 @@ export default function RegistrarUnidadInmobiliaria() {
       tramo_fondo_num: '',
     },
   ]);
+  const handleEliminarUnidad = (index) => {
+  const nuevasUnidades = [...formDataUnidadInmobiliarias];
+  nuevasUnidades.splice(index, 1);
+  setFormDataUnidadInmobiliarias(nuevasUnidades);
+};
+
 const [fechaTerminacion, setFechaTerminacion] = useState(""); 
   // Función para manejar el cambio de la cantidad de pisos
   const handleNivelEspecialChange = (e) => {
@@ -83,6 +89,12 @@ const handleUnidadChange = (e, index) => {
       tramo_fondo_num: '',
     },
   ]);
+  const handleRemoveAreaComun = (index) => {
+  const newData = [...formDataAreaComun];
+  newData.splice(index, 1);
+  setFormDataAreaComun(newData);
+};
+
   const [numPisos, setNumPisos] = useState(1);
   const [numPisos2, setNumPisos2] = useState(1);
   const [nivelesEspeciales, setNivelesEspeciales] = useState({
@@ -489,8 +501,9 @@ const handleAddUnidadInmobiliaria = () => {
           
       {formDataUnidadInmobiliarias.map((unidad, index) => (
         <div key={index} style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <strong>Unidad Inmobiliaria</strong>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>            
+              <strong>Unidad Inmobiliaria</strong>
             <CFormInput
               name="numero_unidad"
               type="text"
@@ -501,6 +514,23 @@ const handleAddUnidadInmobiliaria = () => {
               required
             />
           </div>
+          {/* Botón para eliminar la unidad */}
+        <button
+          type="button"
+          onClick={() => handleEliminarUnidad(index)}
+          style={{
+            marginLeft: '10px',
+            background: 'none',
+            border: 'none',
+            color: 'red',
+            fontWeight: 'bold',
+            fontSize: '20px',
+            cursor: 'pointer',
+          }}
+        >
+          ×
+        </button>
+        </div>
           <div
             style={{
               display: "grid",
@@ -811,18 +841,35 @@ const handleAddUnidadInmobiliaria = () => {
 
       {formDataAreaComun.map((comun, index) => (
           <div key={index} style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <strong>ÁREA COMÚN</strong>
-            <CFormInput
-              name="numero_unidad"
-              type="text"
-              placeholder={`${index + 1}`}  // Colocamos un placeholder si el campo está vacío
-              value={comun.numero_unidad || ''} // Si no tiene valor, lo mostramos vacío
-              onChange={(e) => handleChangeAreaComun(e, index)}  // Manejamos el cambio de valor
-              style={{ marginLeft: '10px', width: '70px' }} // Un pequeño espacio entre el texto y el input
-              required
-            />
-          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <strong>ÁREA COMÚN</strong>
+      <CFormInput
+        name="numero_unidad"
+        type="text"
+        placeholder={`${index + 1}`}
+        value={comun.numero_unidad || ''}
+        onChange={(e) => handleChangeAreaComun(e, index)}
+        style={{ marginLeft: '10px', width: '70px' }}
+        required
+      />
+    </div>
+    <button
+      type="button"
+      onClick={() => handleRemoveAreaComun(index)}
+      style={{
+        marginLeft: '10px',
+        background: 'none',
+        border: 'none',
+        color: 'red',
+        fontWeight: 'bold',
+        fontSize: '20px',
+        cursor: 'pointer',
+      }}
+    >
+      ×
+    </button>
+  </div>
           <div
             style={{
               display: "grid",
@@ -1083,107 +1130,6 @@ const handleAddUnidadInmobiliaria = () => {
     </div>
               </div>
             )}
-           {currentStep === 4 && (
-  <div>
-    <strong>Datos Necesarios:</strong>
-
-    {/* Sección para Fecha de terminación de la construcción */}
-    <div>
-      <label>Fecha de terminación de la construcción:</label>
-      <input
-        type="date"
-        value={fechaTerminacion} // Asegúrate de usar un estado para manejar el valor
-        onChange={(e) => setFechaTerminacion(e.target.value)} // Actualiza el valor con el setter
-        style={{
-          padding: "10px",
-          width: "100%",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-          marginTop: "10px",
-        }}
-      />
-    </div>
-
-    {/* Sección para Propietarios */}
-    <div style={{ marginTop: "20px" }}>
-      <label>Cantidad de Propietarios:</label>
-      <input
-        type="number"
-        min="1"
-        value={cantidadPropietarios} // Estado para la cantidad de propietarios
-        onChange={(e) => setCantidadPropietarios(e.target.value)} // Actualiza la cantidad de propietarios
-        style={{
-          padding: "10px",
-          width: "100%",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-          marginTop: "10px",
-        }}
-      />
-      {/* Mostrar campos para ingresar la información de los propietarios */}
-     {Array.from({ length: cantidadPropietarios }).map((_, index) => (
-  <div key={index} style={{ marginTop: "10px", display: "flex", alignItems: "center" }}>
-    <div style={{ flex: 1 }}>
-      <label>Propietario {index + 1}:</label>
-      <input
-        type="text"
-        value={propietarios[index] || ""} // Estado para manejar cada propietario
-        onChange={(e) => handlePropietarioChange(e, index)} // Actualiza el nombre del propietario
-        placeholder={`Nombre del propietario ${index + 1}`}
-        style={{
-          padding: "10px",
-          width: "100%",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-          marginTop: "10px",
-        }}
-      />
-    </div>
-
-    {/* Input para la Unidad Inmobiliaria correspondiente, solo si hay más de un propietario */}
-    {cantidadPropietarios > 1 && (
-      <div style={{ marginLeft: "10px", flex: 1 }}>
-        <label>Unidad Inmobiliaria:</label>
-        <input
-          type="number"
-          value={unidadesPorPropietario[index] || ""} // Estado para manejar la unidad inmobiliaria de cada propietario
-          onChange={(e) => handleUnidadChange(e, index)} // Actualiza la unidad inmobiliaria
-          placeholder={`Unidad Inmobiliaria`}
-          style={{
-            padding: "10px",
-            width: "100%",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            marginTop: "10px",
-          }}
-        />
-      </div>
-    )}
-  </div>
-))}
-    </div>
-    {/* Resto de la interfaz de usuario */}
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "15px",
-        marginTop: "15px",
-      }}
-    >
-      {nivelesRenderizados}
-    </div>
-
-    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
-      <CButton color="secondary" onClick={() => setCurrentStep(3)}>
-        Atrás
-      </CButton>
-        <CButton color="primary" onClick={() => setCurrentStep(5)}>
-                Siguiente
-        </CButton>
-    </div>
-  </div>
-)}
 
  {currentStep === 4 && (
   <div>

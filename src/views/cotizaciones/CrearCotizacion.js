@@ -247,7 +247,10 @@ const handleSubmit = async (e) => {
 const handleGeneratePDF = async () => {
   const clienteInput = document.querySelector('[name="cliente"]');
   const ubicacionInput = document.querySelector('[name="ubicacion"]');
-
+  const pisoInput = document.querySelector('[name="pisos"]');
+  const telefonoInput = document.querySelector('[name="telefono"]');
+  const dniInput = document.querySelector('[name="dni"]');
+  const areaInput = document.querySelector('[name="area"]');
   if (!clienteInput || !ubicacionInput) {
     alert("No se encontraron los campos requeridos.");
     return;
@@ -272,13 +275,18 @@ const handleGeneratePDF = async () => {
   const ubicacion_limpia = limpiar(ubicacionInput.value || 'Ubicacion');
 
   // Llamar a la función para generar el PDF
+
   const datos = {
     usuario: usuarioSeleccionado,
     codigo: codigoCotizacion,
-    cliente: cliente_limpio,
-    ubicacion: ubicacion_limpia,
-    anio: anio,
-    mes_dia: mes_dia,
+    detalles: detalles,
+    piso: pisoInput.value,
+    area: areaInput.value,
+    cliente: clienteInput.value,
+    ubicacion: ubicacionInput.value,
+    telefono: telefonoInput.value,
+    dni: dniInput.value,
+    observaciones: observaciones,
     cuotas: montoCuotas,
     fechas: fechasCuotas,
   };

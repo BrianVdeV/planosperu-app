@@ -636,7 +636,6 @@ def formulario_persona_natural():
 
             if nivel and numero_unidad:
                 niveles_por_unidad[numero_unidad].append(nivel)
-
         # Inicializamos fila
         fila_ui = 293  # Fila de inicio para colocar los datos
         item_number = 1  # Empezamos desde el ítem 1
@@ -678,13 +677,14 @@ def formulario_persona_natural():
                 # Recorrer todas las unidades y asignar al propietario a todas ellas
                 for numero_unidad, datos in unidades_totales.items():
                     datos['propietarios'].append(propietario.get('propietario'))
-                combinar_filas = True
             else:
                 # Si unidad_inmobiliaria no es "todo", asignamos al propietario solo a la unidad correspondiente
                 if unidad_inmobiliaria in unidades_totales:
                     unidades_totales[unidad_inmobiliaria]['propietarios'].append(propietario.get('propietario'))
-                combinar_filas = False
-
+        print(unidades_totales)
+        fila_propietarios = 592  # Fila inicial para propietarios
+        fila_porcentaje = 592    # Fila inicial para porcentaje de participación
+        porcentajes_texto = ""
         # Ahora, mostrar las unidades y sus datos
         for numero_unidad, datos in unidades_totales.items():
             niveles_unicos = ", ".join(datos['niveles'])  # Niveles únicos
@@ -713,44 +713,46 @@ def formulario_persona_natural():
             # Colocar el área total en H y I (área techada e área libre)
             hoja_formulario.range(f'H{fila_ui}').value = area_techada_total  # Total del área techada en la columna H
             hoja_formulario.range(f'I{fila_ui}').value = area_libre_total  # Total del área libre en la columna I
-            fila_propietarios = 592  # Fila inicial para propietarios
-            fila_porcentaje = 592  # Fila inicial para porcentaje de participación
+            
             # Colocar el porcentaje de área techada en J
             hoja_formulario.range(f'J{fila_ui}').value = round(porcentaje_area_techada, 2)  # Porcentaje en la columna J
 
             propietarios = datos['propietarios']
-                # Si solo hay un propietario y es dueño de todas las unidades
+            print(propietarios)
             if len(propietarios) == 1 and unidad_inmobiliaria == "todo":
+                # Concatenar el porcentaje con un salto de línea para agregar a H592
+                porcentajes_texto += str(round(porcentaje_area_techada, 2)) + '\n'
                 hoja_formulario.range(f'C{fila_ui}').value = propietarios[0]  # Colocamos el nombre del propietario
-                # Combinamos solo las filas correspondientes a las unidades
-                hoja_formulario.range(f'C{fila_ui}:C{fila_ui + len(unidades_totales)- 1}').merge()  # Combina las celdas
-                # Colocamos el número de ítem (solo una vez)
-                hoja_formulario.range(f'A{fila_ui}:A{fila_ui + len(unidades_totales) - 1}').merge()  # Restamos 1 en el rango
-                hoja_formulario.range(f'A{fila_ui}').value = item_number  
-                 # Colocar el propietario en la columna B y el porcentaje en la columna H
+                hoja_formulario.range(f'C{fila_ui}:C{fila_ui + len(unidades_totales) - 1}').merge()  # Combinamos las celdas
+                hoja_formulario.range(f'A{fila_ui}:A{fila_ui + len(unidades_totales) - 1}').merge()  # Combinar ítem
+                hoja_formulario.range(f'A{fila_ui}').value = item_number  # Colocamos el número de ítem
+                
+                # Colocar el propietario en la columna B y el porcentaje en la columna H
                 hoja_formulario.range(f'B{fila_propietarios}').value = propietarios[0]  # Colocamos el propietario
-                hoja_formulario.range(f'H{fila_porcentaje}').value = round(porcentaje_area_techada, 2)  # Porcentaje de área techada
+                hoja_formulario.range('H592').value = porcentajes_texto.strip()
 
                 # Avanzamos las filas para el siguiente propietario y porcentaje
                 fila_propietarios += 2
                 fila_porcentaje += 2
+                fila_ui += 1  # Avanzamos la fila para la siguiente unidad
+                item_number += 1  # Aumentamos el contador de ítem
+
             # Si hay más de un propietario
-            elif len(propietarios) > 1:
-                for propietario in propietarios:
-                    hoja_formulario.range(f'C{fila_ui}').value = propietario  # Colocamos el nombre del propietario
-                    fila_ui += 1  # Avanzamos a la siguiente fila para el siguiente propietario
-                    # Colocar el propietario en la columna B y el porcentaje de área techada en la columna H
-                hoja_formulario.range(f'B{fila_propietarios}').value = propietario  # Colocamos el propietario
-                hoja_formulario.range(f'H{fila_porcentaje}').value = round(porcentaje_area_techada, 2)  # Colocamos el porcentaje
-
-                # Avanzamos las filas para el siguiente propietario y porcentaje
-                fila_propietarios += 2
-                fila_porcentaje += 2
-            item_number += 1  # Aumentamos el contador de ítem
-
-            # Avanzar a la siguiente fila después de colocar todos los datos de esta unidad (al final de la unidad)
-            fila_ui += 1
-
+            elif len(propietarios) == 1:
+                   # Colocamos el propietario en la columna C para la fila correspondiente
+                hoja_formulario.range(f'C{fila_ui}').value = propietarios[0]  # Propietario de la unidad
+                
+                # Colocamos el número de ítem en la columna A para la misma fila
+                hoja_formulario.range(f'A{fila_ui}').value = item_number  # Número de ítem en la columna A
+                hoja_formulario.range(f'B{fila_propietarios}').value = propietarios[0]  # Colocamos el propietario
+                # Aquí puedes colocar otros datos según sea necesario (por ejemplo, el porcentaje de área techada)
+                # Ejemplo: Colocar el porcentaje de área techada en la columna H
+                hoja_formulario.range(f'H{fila_porcentaje}').value = round(porcentaje_area_techada, 2)
+                # Avanzamos a la siguiente fila para el siguiente propietario
+                fila_propietarios += 2  # Avanzamos dos filas para el siguiente propietario (B594, B596, ...)
+                fila_porcentaje += 2    # Avanzamos las filas para el siguiente porcentaje
+                fila_ui += 1           # Avanzamos la fila para la siguiente unidad
+                item_number += 1       # Aumentamos el contador de ítem
 
         # Guardar el archivo generado en una ruta temporal
         nombre_temporal = f"Formulario_Persona_Natural_{uuid.uuid4().hex}.xlsm"
