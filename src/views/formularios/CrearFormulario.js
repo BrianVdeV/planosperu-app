@@ -30,6 +30,15 @@ export default function RegistrarUnidadInmobiliaria() {
   nuevasUnidades.splice(index, 1);
   setFormDataUnidadInmobiliarias(nuevasUnidades);
 };
+const [unidadesAsignadas, setUnidadesAsignadas] = useState([]); 
+const handleUnidadAsignadaChange = (e, index) => {
+  const opcionesSeleccionadas = Array.from(e.target.selectedOptions).map(
+    (option) => option.value
+  );
+  const nuevasUnidades = [...unidadesAsignadas];
+  nuevasUnidades[index] = opcionesSeleccionadas;
+  setUnidadesAsignadas(nuevasUnidades);
+};
 
 const [fechaTerminacion, setFechaTerminacion] = useState(""); 
   // Función para manejar el cambio de la cantidad de pisos
@@ -63,6 +72,17 @@ const handleUnidadChange = (e, index) => {
   const newUnidades = [...unidadesPorPropietario];
   newUnidades[index] = e.target.value;  // Actualiza la unidad inmobiliaria
   setUnidadesPorPropietario(newUnidades);
+};
+const [formDataPropietario, setFormDataPropietario] = useState({
+  unidad_asignada: '',
+  // otros campos...
+});
+const handleChangePropietario = (e) => {
+  const { name, value } = e.target;
+  setFormDataPropietario(prev => ({
+    ...prev,
+    [name]: value,
+  }));
 };
 
 
@@ -263,9 +283,12 @@ const handleAddUnidadInmobiliaria = () => {
     e.preventDefault();
     // Generar un array de objetos con el nombre y unidad de cada propietario
   const propietariosYUnidades = propietarios.map((nombre, index) => ({
-      propietario: nombre,
-      unidad_inmobiliaria: cantidadPropietarios === 1 ? "todo" : (unidadesPorPropietario[index] || ""),
-    }));
+    propietario: nombre,
+    unidad_inmobiliaria: cantidadPropietarios === 1 
+      ? formDataUnidadInmobiliarias.map(u => u.numero_unidad) // Todas las unidades
+      : (unidadesAsignadas[index] || []), // Unidades asignadas para ese propietario
+  }));
+
   
     // Enviar un array con los propietarios, incluso si hay un solo propietario
     const propietariosFinales = propietariosYUnidades;  // Enviamos siempre como array, incluso si hay uno solo
@@ -1159,7 +1182,15 @@ const handleAddUnidadInmobiliaria = () => {
         type="number"
         min="1"
         value={cantidadPropietarios} // Estado para la cantidad de propietarios
-        onChange={(e) => setCantidadPropietarios(e.target.value)} // Actualiza la cantidad de propietarios
+        onChange={(e) => {
+          const nuevaCantidad = parseInt(e.target.value) || 1;
+          setCantidadPropietarios(nuevaCantidad);
+
+          // Recortar los arrays si se reduce la cantidad
+          setPropietarios((prev) => prev.slice(0, nuevaCantidad));
+          setUnidadesAsignadas((prev) => prev.slice(0, nuevaCantidad));
+        }}
+
         style={{
           padding: "10px",
           width: "100%",
@@ -1189,24 +1220,31 @@ const handleAddUnidadInmobiliaria = () => {
     </div>
 
     {/* Input para la Unidad Inmobiliaria correspondiente, solo si hay más de un propietario */}
-    {cantidadPropietarios > 1 && (
-      <div style={{ marginLeft: "10px", flex: 1 }}>
-        <label>Unidad Inmobiliaria:</label>
-        <input
-          type="number"
-          value={unidadesPorPropietario[index] || ""} // Estado para manejar la unidad inmobiliaria de cada propietario
-          onChange={(e) => handleUnidadChange(e, index)} // Actualiza la unidad inmobiliaria
-          placeholder={`Unidad Inmobiliaria`}
-          style={{
-            padding: "10px",
-            width: "100%",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            marginTop: "10px",
-          }}
-        />
-      </div>
-    )}
+    {/* Input para la Unidad Inmobiliaria correspondiente, solo si hay más de un propietario */}
+{cantidadPropietarios > 1 && (
+  <div style={{ marginLeft: "10px", flex: 1 }}>
+    <label>Unidad Inmobiliaria:</label>
+<CFormSelect
+  multiple
+  name={`unidad_asignada_${index}`}
+  value={unidadesAsignadas[index] || []}
+  onChange={(e) => handleUnidadAsignadaChange(e, index)}
+  required
+>
+  {[...new Set(
+    formDataUnidadInmobiliarias
+      .map((unidad) => unidad.numero_unidad?.trim())
+      .filter((num) => num)
+  )].map((num, idx) => (
+    <option key={idx} value={num}>
+      Unidad {num}
+    </option>
+  ))}
+</CFormSelect>
+
+  </div>
+)}
+
   </div>
 ))}
     </div>

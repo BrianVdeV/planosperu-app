@@ -518,8 +518,8 @@ def formulario_persona_natural():
             hoja_formulario.range(f'A{424 + offset}').value = comun.get('uso', '')
             # Calcular el área libre (si el campo 'area_ocupada' y 'area_techada' están presentes y son numéricos)
             try:
-                area_ocupada = float(unidad.get('area_ocupada', 0) or 0)
-                area_techada = float(unidad.get('area_techada', 0) or 0)
+                area_ocupada = float(comun.get('area_ocupada', 0) or 0)
+                area_techada = float(comun.get('area_techada', 0) or 0)
                 area_libre = area_ocupada - area_techada
             except ValueError:
                 area_libre = ''  # Si no es posible calcular, dejar vacío
@@ -668,91 +668,172 @@ def formulario_persona_natural():
             unidades_totales[numero_unidad]['niveles'].add(unidad.get('nivel', '').upper())  # Usamos upper para homogeneizar
 
       # Asociar los propietarios con la unidad correspondiente
+        # Asociar los propietarios con la unidad correspondiente
         for propietario in data.get('propietarios', []):
-            # Verificar si el propietario tiene una unidad_inmobiliaria asignada
-            unidad_inmobiliaria = propietario.get('unidad_inmobiliaria', '').strip()
+            unidades = propietario.get('unidad_inmobiliaria', [])
 
-            # Si unidad_inmobiliaria es "todo", el propietario es dueño de todas las unidades
-            if unidad_inmobiliaria == "todo":
-                # Recorrer todas las unidades y asignar al propietario a todas ellas
-                for numero_unidad, datos in unidades_totales.items():
-                    datos['propietarios'].append(propietario.get('propietario'))
-            else:
-                # Si unidad_inmobiliaria no es "todo", asignamos al propietario solo a la unidad correspondiente
-                if unidad_inmobiliaria in unidades_totales:
-                    unidades_totales[unidad_inmobiliaria]['propietarios'].append(propietario.get('propietario'))
+            for unidad in unidades:
+                unidad = unidad.strip()
+                if unidad in unidades_totales:
+                    unidades_totales[unidad]['propietarios'].append(propietario.get('propietario'))
+                else:
+                    print(f"Unidad '{unidad}' no encontrada en unidades_totales")
+
         print(unidades_totales)
         fila_propietarios = 592  # Fila inicial para propietarios
         fila_porcentaje = 592    # Fila inicial para porcentaje de participación
         porcentajes_texto = ""
-        # Ahora, mostrar las unidades y sus datos
+
+        # Agrupamos unidades por propietario
+        propietarios_unidades = {}
+
+        for numero_unidad, datos in unidades_totales.items():
+            for propietario in datos['propietarios']:
+                nombre_prop = propietario
+                if nombre_prop not in propietarios_unidades:
+                    propietarios_unidades[nombre_prop] = []
+                propietarios_unidades[nombre_prop].append(numero_unidad)
+
+        # Llevar control de propietarios ya procesados
+        propietarios_procesados = set()
+        
         for numero_unidad, datos in unidades_totales.items():
             niveles_unicos = ", ".join(datos['niveles'])  # Niveles únicos
-            area_techada_total = datos['area_techada_total']  # Suma de áreas techadas
-            area_libre_total = datos['area_libre_total']  # Suma de áreas libres
-            
-            # Calcular el porcentaje de área techada de esta unidad con respecto al total
+            area_techada_total = datos['area_techada_total']
+            area_libre_total = datos['area_libre_total']
+
             if total_area_techada > 0:
                 porcentaje_area_techada = (area_techada_total / total_area_techada) * 100
             else:
-                porcentaje_area_techada = 0  # Si el total es 0, el porcentaje también será 0
-            
-            # Colocar los datos en la hoja
-            hoja_formulario.range(f'F{fila_ui}').value = f'UI {numero_unidad}'  # Número de unidad en la columna F
-            hoja_formulario.range(f'E{fila_ui}').value = niveles_unicos  # Niveles únicos en la columna E
-            
-            # 🟦 USO asignado (G columna)
-            uso_asignado = None
+                porcentaje_area_techada = 0
+
+            hoja_formulario.range(f'F{fila_ui}').value = f'UI {numero_unidad}'
+            hoja_formulario.range(f'E{fila_ui}').value = niveles_unicos
+
+            # Uso asignado (columna G)
+            uso_asignado = ''
             for unidad in data.get('unidades_inmobiliaria', []):
                 if unidad.get('numero_unidad') == numero_unidad:
                     uso_asignado = unidad.get('uso', '').upper()
                     break
 
-            hoja_formulario.range(f'G{fila_ui}').value = uso_asignado or ''  # Colocamos el uso asignado en la columna G
-
-            # Colocar el área total en H y I (área techada e área libre)
-            hoja_formulario.range(f'H{fila_ui}').value = area_techada_total  # Total del área techada en la columna H
-            hoja_formulario.range(f'I{fila_ui}').value = area_libre_total  # Total del área libre en la columna I
-            
-            # Colocar el porcentaje de área techada en J
-            hoja_formulario.range(f'J{fila_ui}').value = round(porcentaje_area_techada, 2)  # Porcentaje en la columna J
-
+            hoja_formulario.range(f'G{fila_ui}').value = uso_asignado or ''
+            hoja_formulario.range(f'H{fila_ui}').value = area_techada_total
+            hoja_formulario.range(f'I{fila_ui}').value = area_libre_total
+            hoja_formulario.range(f'J{fila_ui}').value = round(porcentaje_area_techada, 2)
+            propietario = datos['propietarios'][0]  # Solo tomamos el primero, ya que se usa como clave
             propietarios = datos['propietarios']
-            print(propietarios)
-            if len(propietarios) == 1 and unidad_inmobiliaria == "todo":
-                # Concatenar el porcentaje con un salto de línea para agregar a H592
-                porcentajes_texto += str(round(porcentaje_area_techada, 2)) + '\n'
-                hoja_formulario.range(f'C{fila_ui}').value = propietarios[0]  # Colocamos el nombre del propietario
-                hoja_formulario.range(f'C{fila_ui}:C{fila_ui + len(unidades_totales) - 1}').merge()  # Combinamos las celdas
-                hoja_formulario.range(f'A{fila_ui}:A{fila_ui + len(unidades_totales) - 1}').merge()  # Combinar ítem
-                hoja_formulario.range(f'A{fila_ui}').value = item_number  # Colocamos el número de ítem
-                
-                # Colocar el propietario en la columna B y el porcentaje en la columna H
-                hoja_formulario.range(f'B{fila_propietarios}').value = propietarios[0]  # Colocamos el propietario
-                hoja_formulario.range('H592').value = porcentajes_texto.strip()
+            unidades_prop = propietarios_unidades[propietario]
+            if len(propietarios) > 1 and len(unidades_prop) == 1:
+                # Mostrar propietarios en C con salto de línea
+                propietarios_texto = "\n".join(propietarios)
+                hoja_formulario.range(f'C{fila_ui}').value = propietarios_texto
+                hoja_formulario.range(f'A{fila_ui}').value = item_number
 
-                # Avanzamos las filas para el siguiente propietario y porcentaje
-                fila_propietarios += 2
-                fila_porcentaje += 2
-                fila_ui += 1  # Avanzamos la fila para la siguiente unidad
-                item_number += 1  # Aumentamos el contador de ítem
+                # Escribir cada propietario en una fila de la columna B
+                for i, prop in enumerate(propietarios):
+                    hoja_formulario.range(f'B{fila_propietarios + i * 2}').value = prop
 
-            # Si hay más de un propietario
-            elif len(propietarios) == 1:
-                   # Colocamos el propietario en la columna C para la fila correspondiente
-                hoja_formulario.range(f'C{fila_ui}').value = propietarios[0]  # Propietario de la unidad
-                
-                # Colocamos el número de ítem en la columna A para la misma fila
-                hoja_formulario.range(f'A{fila_ui}').value = item_number  # Número de ítem en la columna A
-                hoja_formulario.range(f'B{fila_propietarios}').value = propietarios[0]  # Colocamos el propietario
-                # Aquí puedes colocar otros datos según sea necesario (por ejemplo, el porcentaje de área techada)
-                # Ejemplo: Colocar el porcentaje de área techada en la columna H
-                hoja_formulario.range(f'H{fila_porcentaje}').value = round(porcentaje_area_techada, 2)
-                # Avanzamos a la siguiente fila para el siguiente propietario
-                fila_propietarios += 2  # Avanzamos dos filas para el siguiente propietario (B594, B596, ...)
-                fila_porcentaje += 2    # Avanzamos las filas para el siguiente porcentaje
-                fila_ui += 1           # Avanzamos la fila para la siguiente unidad
-                item_number += 1       # Aumentamos el contador de ítem
+                # Combinar celdas en H para los porcentajes y escribirlos
+                inicio_merge = fila_propietarios
+                fin_merge = fila_propietarios + (len(propietarios) - 1) * 2
+                hoja_formulario.range(f'H{inicio_merge}:H{fin_merge}').merge()
+
+                # Calcular porcentajes de las unidades (se repite por la cantidad de propietarios)
+                porcentajes_propietario = "\n".join(
+                    f"{round((unidades_totales[u]['area_techada_total'] / total_area_techada) * 100, 2)}"
+                    for u in unidades_prop
+                )
+                hoja_formulario.range(f'H{inicio_merge}').value = porcentajes_propietario
+
+                # Avanzar filas según cantidad de propietarios
+                fila_propietarios += len(propietarios) * 2
+                fila_porcentaje += len(propietarios) * 2
+                item_number += 1
+                fila_ui += 1  # una unidad más
+            elif len(propietarios) > 1 and len(unidades_prop) > 1:
+                fila_ui += 1
+                if propietario not in propietarios_procesados:
+                    # Rango para combinar filas según unidades del propietario
+                    inicio_merge = fila_ui - 1
+                    fin_merge = fila_ui + len(unidades_prop) - 1
+
+                    # Combinar y escribir propietarios en columna C (ya lo tienes bien)
+                    hoja_formulario.range(f'C{inicio_merge}:C{fin_merge}').merge()
+                    propietarios_texto = "\n".join(propietarios)
+                    hoja_formulario.range(f'C{inicio_merge}').value = propietarios_texto
+
+                    # Combinar y escribir número de ítem en A (igual)
+                    hoja_formulario.range(f'A{inicio_merge}:A{fin_merge}').merge()
+                    hoja_formulario.range(f'A{inicio_merge}').value = item_number
+                    # Escribir cada propietario en una fila de la columna B
+                    for i, prop in enumerate(propietarios):
+                        hoja_formulario.range(f'B{fila_propietarios + i * 2}').value = prop
+
+                    # Combinar celdas para el porcentaje de unidades (igual)
+                    inicio_merge_h = fila_propietarios
+                    fin_merge_h = fila_propietarios + (len(propietarios) - 1) * 2
+                    hoja_formulario.range(f'H{inicio_merge_h}:H{fin_merge_h}').merge()
+
+                    # Calcular y mostrar un porcentaje por cada unidad
+                    porcentajes_texto = "\n".join(
+                        f"{round((unidades_totales[u]['area_techada_total'] / total_area_techada) * 100, 2)}"
+                        for u in unidades_prop
+                    )
+                    hoja_formulario.range(f'H{inicio_merge_h}').value = porcentajes_texto
+
+                    propietarios_procesados.add(propietario)
+
+                    # Avanzar filas según cantidad de propietarios (por B y H) y unidades (por A y C)
+                    fila_propietarios += len(propietarios) * 2
+                    fila_porcentaje += len(propietarios) * 2
+                    item_number += 1
+                    fila_ui += 1
+            else:
+                propietario = datos['propietarios'][0] 
+                if len(unidades_prop) > 1:
+                    if propietario not in propietarios_procesados:
+                        # Combinar celdas en columnas A y C
+                        inicio_merge = fila_ui
+                        fin_merge = fila_ui + len(unidades_prop) - 1
+
+                        hoja_formulario.range(f'C{inicio_merge}:C{fin_merge}').merge()
+                        hoja_formulario.range(f'C{inicio_merge}').value = propietario
+
+                        hoja_formulario.range(f'A{inicio_merge}:A{fin_merge}').merge()
+                        hoja_formulario.range(f'A{inicio_merge}').value = item_number
+
+                        hoja_formulario.range(f'B{fila_propietarios}').value = propietario
+
+                        # Calcular suma total de porcentaje para ese propietario
+                        # Concatenar los porcentajes uno debajo del otro
+                        porcentajes_propietario = "\n".join(
+                            f"{round((unidades_totales[u]['area_techada_total'] / total_area_techada) * 100, 2)}"
+                            for u in unidades_prop
+                        )
+                        hoja_formulario.range(f'H{fila_porcentaje}').value = porcentajes_propietario
+
+
+                        # Marcar como procesado
+                        propietarios_procesados.add(propietario)
+
+                        # Avanzamos contadores SOLO una vez por propietario
+                        fila_propietarios += 2
+                        fila_porcentaje += 2
+                        item_number += 1
+            
+                else:
+                    # Propietario con solo una unidad
+                    hoja_formulario.range(f'C{fila_ui}').value = propietario
+                    hoja_formulario.range(f'A{fila_ui}').value = item_number
+                    hoja_formulario.range(f'B{fila_propietarios}').value = propietario
+                    hoja_formulario.range(f'H{fila_porcentaje}').value = round(porcentaje_area_techada, 2)
+
+                    fila_propietarios += 2
+                    fila_porcentaje += 2
+                    item_number += 1
+
+                fila_ui += 1  # SIEMPRE se avanza por unidad
 
         # Guardar el archivo generado en una ruta temporal
         nombre_temporal = f"Formulario_Persona_Natural_{uuid.uuid4().hex}.xlsm"

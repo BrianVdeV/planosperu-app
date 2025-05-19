@@ -1,6 +1,6 @@
 {
   "name": "planos-peru",         
-"version": "1.0.18",             
+"version": "1.0.19",             
 "description": "Planos Peru",    
 "homepage": ".",                 
  "bugs": {
@@ -110,6 +110,14 @@
   {
       "from": "./docs/IND.xlsx",
       "to": "dist/IND.xlsx"
+  },
+  {
+      "from": "./docs/SUB-MUN.xlsx",
+      "to": "dist/SUB-MUN.xlsx"
+  },
+  {
+      "from": "./docs/IND-MUN.xlsx",
+      "to": "dist/IND-MUN.xlsx"
   },
   {
       "from": "./docs/DEC-IND.xlsx",
