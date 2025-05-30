@@ -62,7 +62,17 @@ const handleNivelEspecial2Change = (e) => {
   }));
 };
 const [cantidadPropietarios, setCantidadPropietarios] = useState(1); // Inicializamos con 1 propietario
-const [propietarios, setPropietarios] = useState([]); // Para almacenar los nombres de los propietarios
+const [propietarios, setPropietarios] = useState([
+  {
+    nombres: "",
+    apellidos: "",
+    dni: "",
+    estado_civil: "",
+    conyugue: "",
+    direccion: "",
+  }
+]);
+
 const [unidadesPorPropietario, setUnidadesPorPropietario] = useState([]); // Para almacenar las unidades inmobiliarias por propietario
 
 // Manejo de cambios en el nombre del propietario
@@ -79,7 +89,6 @@ const handleUnidadChange = (e, index) => {
 };
 const [formDataPropietario, setFormDataPropietario] = useState({
   unidad_asignada: '',
-  // otros campos...
 });
 const handleChangePropietario = (e) => {
   const { name, value } = e.target;
@@ -329,12 +338,13 @@ const handleAddUnidadInmobiliaria = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Generar un array de objetos con el nombre y unidad de cada propietario
-  const propietariosYUnidades = propietarios.map((nombre, index) => ({
-    propietario: nombre,
-    unidad_inmobiliaria: cantidadPropietarios === 1 
-      ? formDataUnidadInmobiliarias.map(u => u.numero_unidad) // Todas las unidades
-      : (unidadesAsignadas[index] || []), // Unidades asignadas para ese propietario
-  }));
+  const propietariosYUnidades = propietarios.map((propietario, index) => ({
+  ...propietario, // Incluye nombres, apellidos, dni, etc.
+  unidad_inmobiliaria: cantidadPropietarios === 1 
+    ? formDataUnidadInmobiliarias.map(u => u.numero_unidad)
+    : (unidadesAsignadas[index] || []),
+}));
+
 
   
     // Enviar un array con los propietarios, incluso si hay un solo propietario
@@ -420,69 +430,7 @@ const handleAddUnidadInmobiliaria = () => {
                       required
                     />
                   </div>
-
-                  <div>
-                    <CFormInput
-                      name="nombres"
-                      label="Nombres"
-                      value={formDataOT.nombres}
-                      onChange={handleChangeOT}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <CFormInput
-                      name="apellidos"
-                      label="Apellidos"
-                      value={formDataOT.apellidos}
-                      onChange={handleChangeOT}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <CFormInput
-                      name="dni"
-                      label="DNI"
-                      value={formDataOT.dni}
-                      onChange={handleChangeOT}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <CFormSelect
-                      name="estado_civil"
-                      label="Estado Civil"
-                      value={formDataOT.estado_civil}
-                      onChange={handleChangeOT}
-                      required
-                    >
-                      <option value="">Seleccione Estado Civil</option>
-                      <option value="soltero">Soltero</option>
-                      <option value="casado">Casado</option>
-                      <option value="viudo">Viudo</option>
-                      <option value="divorciado">Divorciado</option>
-                      <option value="separado">Separado Jurídicamente</option>
-                    </CFormSelect>
-                  </div>
-                  <div>
-                    <CFormInput
-                      name="conyugue"
-                      label="Conyugue"
-                      value={formDataOT.conyugue}
-                      onChange={handleChangeOT}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <CFormInput
-                      name="direccion"
-                      label="Dirección"
-                      value={formDataOT.direccion}
-                      onChange={handleChangeOT}
-                      required
-                    />
-                  </div>
-                  <div>
+                   <div>
                     <CFormInput
                       name="area_m2"
                       label="Área en m²"
@@ -511,6 +459,130 @@ const handleAddUnidadInmobiliaria = () => {
                       required
                     />
                   </div>
+
+                 <hr style={{ margin: "30px 0" }} />
+<strong>Cantidad de Propietarios:</strong>
+<input
+  type="number"
+  min="1"
+  value={cantidadPropietarios}
+  onChange={(e) => {
+    const nuevaCantidad = parseInt(e.target.value) || 1;
+    setCantidadPropietarios(nuevaCantidad);
+
+    setPropietarios((prev) => {
+      const copia = [...prev];
+      while (copia.length < nuevaCantidad) {
+        copia.push({ nombres: "", apellidos: "", dni: "", estado_civil: "", conyugue: "", direccion: "" });
+      }
+      return copia.slice(0, nuevaCantidad);
+    });
+  }}
+  style={{
+    padding: "10px",
+    width: "100%",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    marginTop: "10px",
+    marginBottom: "20px",
+  }}
+/>
+
+{propietarios.map((propietario, index) => (
+  <div key={index} style={{ marginBottom: "30px", border: "1px solid #ccc", padding: "15px", borderRadius: "10px" }}>
+    <strong>Propietario {index + 1}</strong>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "15px",
+        marginTop: "15px",
+      }}
+    >
+      <div>
+        <CFormInput
+          label="Nombres"
+          value={propietario.nombres}
+          onChange={(e) => {
+            const nuevos = [...propietarios];
+            nuevos[index].nombres = e.target.value;
+            setPropietarios(nuevos);
+          }}
+          required
+        />
+      </div>
+      <div>
+        <CFormInput
+          label="Apellidos"
+          value={propietario.apellidos}
+          onChange={(e) => {
+            const nuevos = [...propietarios];
+            nuevos[index].apellidos = e.target.value;
+            setPropietarios(nuevos);
+          }}
+          required
+        />
+      </div>
+      <div>
+        <CFormInput
+          label="DNI"
+          value={propietario.dni}
+          onChange={(e) => {
+            const nuevos = [...propietarios];
+            nuevos[index].dni = e.target.value;
+            setPropietarios(nuevos);
+          }}
+          required
+        />
+      </div>
+      <div>
+        <CFormSelect
+          label="Estado Civil"
+          value={propietario.estado_civil}
+          onChange={(e) => {
+            const nuevos = [...propietarios];
+            nuevos[index].estado_civil = e.target.value;
+            setPropietarios(nuevos);
+          }}
+          required
+        >
+          <option value="">Seleccione Estado Civil</option>
+          <option value="soltero">Soltero</option>
+          <option value="casado">Casado</option>
+          <option value="viudo">Viudo</option>
+          <option value="divorciado">Divorciado</option>
+          <option value="separado">Separado Jurídicamente</option>
+        </CFormSelect>
+      </div>
+      <div>
+        <CFormInput
+          label="Conyugue"
+          value={propietario.conyugue}
+          onChange={(e) => {
+            const nuevos = [...propietarios];
+            nuevos[index].conyugue = e.target.value;
+            setPropietarios(nuevos);
+          }}
+          required
+        />
+      </div>
+      <div>
+        <CFormInput
+          label="Dirección"
+          value={propietario.direccion}
+          onChange={(e) => {
+            const nuevos = [...propietarios];
+            nuevos[index].direccion = e.target.value;
+            setPropietarios(nuevos);
+          }}
+          required
+        />
+      </div>
+    </div>
+  </div>
+))}
+
+                
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
@@ -1258,50 +1330,27 @@ const handleAddUnidadInmobiliaria = () => {
 
     {/* Sección para Propietarios */}
     <div style={{ marginTop: "20px" }}>
-      <label>Cantidad de Propietarios:</label>
-      <input
-        type="number"
-        min="1"
-        value={cantidadPropietarios} // Estado para la cantidad de propietarios
-        onChange={(e) => {
-          const nuevaCantidad = parseInt(e.target.value) || 1;
-          setCantidadPropietarios(nuevaCantidad);
-
-          // Recortar los arrays si se reduce la cantidad
-          setPropietarios((prev) => prev.slice(0, nuevaCantidad));
-          setUnidadesAsignadas((prev) => prev.slice(0, nuevaCantidad));
-        }}
-
-        style={{
-          padding: "10px",
-          width: "100%",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-          marginTop: "10px",
-        }}
-      />
       {/* Mostrar campos para ingresar la información de los propietarios */}
      {Array.from({ length: cantidadPropietarios }).map((_, index) => (
   <div key={index} style={{ marginTop: "10px", display: "flex", alignItems: "center" }}>
     <div style={{ flex: 1 }}>
       <label>Propietario {index + 1}:</label>
       <input
-        type="text"
-        value={propietarios[index] || ""} // Estado para manejar cada propietario
-        onChange={(e) => handlePropietarioChange(e, index)} // Actualiza el nombre del propietario
-        placeholder={`Nombre del propietario ${index + 1}`}
-        style={{
-          padding: "10px",
-          width: "100%",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-          marginTop: "10px",
-        }}
-      />
+  type="text"
+  value={`${propietarios[index]?.nombres || ""} ${propietarios[index]?.apellidos || ""}`}
+  readOnly
+  style={{
+    padding: "10px",
+    width: "100%",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    marginTop: "10px",
+    backgroundColor: "#f9f9f9", // opcional: para que se vea como un campo deshabilitado
+  }}
+/>
+
     </div>
 
-    {/* Input para la Unidad Inmobiliaria correspondiente, solo si hay más de un propietario */}
-    {/* Input para la Unidad Inmobiliaria correspondiente, solo si hay más de un propietario */}
 {cantidadPropietarios > 1 && (
   <div style={{ marginLeft: "10px", flex: 1 }}>
     <label>Unidad Inmobiliaria:</label>
