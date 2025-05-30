@@ -16,7 +16,7 @@ export default function CrearCotizacion() {
   // 🔥 Añadir estados para usuarios
   const [usuarios, setUsuarios] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
-
+const [showModalJPG, setShowModalJPG] = useState(false);
   // 🔄 Cargar cotizaciones
   useEffect(() => {
     axios.get("https://planosperu.com.pe/intranet/api/tipot/")
@@ -174,6 +174,64 @@ const handleCotizacionChange = async (selectedOption) => {
   }
 };
 
+useEffect(() => {
+  const inputDni = document.querySelector('input[name="dni"]');
+  const inputCliente = document.querySelector('input[name="cliente"]');
+
+  if (!inputDni || !inputCliente) return;
+
+  const capitalizarNombre = (texto) => {
+    return texto
+      .toLowerCase()
+      .split(' ')
+      .map(palabra => palabra.charAt(0).toUpperCase() + palabra.slice(1))
+      .join(' ');
+  };
+
+  const manejarCambio = async (e) => {
+    const valor = e.target.value.trim();
+
+    if (valor.length === 8) {
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/dni/${valor}`);
+        const data = await res.json();
+        if (data?.nombreCompleto) {
+          inputCliente.value = capitalizarNombre(data.nombreCompleto);
+        } else {
+          inputCliente.value = '';
+        }
+      } catch (error) {
+        console.error("Error al consultar DNI", error);
+        inputCliente.value = '';
+      }
+
+    } else if (valor.length === 11) {
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/ruc/${valor}`);
+        const data = await res.json();
+        if (data?.razonSocial) {
+          inputCliente.value = capitalizarNombre(data.razonSocial);
+        } else {
+          inputCliente.value = '';
+        }
+      } catch (error) {
+        console.error("Error al consultar RUC", error);
+        inputCliente.value = '';
+      }
+
+    } else {
+      inputCliente.value = '';
+    }
+  };
+
+  inputDni.addEventListener("input", manejarCambio);
+
+  return () => {
+    inputDni.removeEventListener("input", manejarCambio);
+  };
+}, []);
+
+
 
 // Función que maneja el envío del formulario
 const handleSubmit = async (e) => {
@@ -317,11 +375,93 @@ const handleGeneratePDF = async () => {
   a.click(); 
 
   setShowModal(false);  // Cerrar el modal
+    setShowModalJPG(true);
+
+};
+
+
+// Función que se llama cuando el usuario confirma la creación del JPG
+const handleGenerateJPG = async () => {
+  const clienteInput = document.querySelector('[name="cliente"]');
+  const ubicacionInput = document.querySelector('[name="ubicacion"]');
+  const pisoInput = document.querySelector('[name="pisos"]');
+  const telefonoInput = document.querySelector('[name="telefono"]');
+  const dniInput = document.querySelector('[name="dni"]');
+  const areaInput = document.querySelector('[name="area"]');
+  if (!clienteInput || !ubicacionInput) {
+    alert("No se encontraron los campos requeridos.");
+    return;
+  }
+
+  const selectedCotizacion = cotizacion.find(c => c.id.toString() === cotizacionSeleccionado.toString());
+  const codigoCotizacion = selectedCotizacion?.codigo || 'SIN-CODIGO';
+
+  const hoy = new Date();
+  const anio = hoy.getFullYear();
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoy.getDate()).padStart(2, '0');
+  const mes_dia = `${mes}${dia}`;
+
+  const abreviado_usuario = (usuarioSeleccionado.slice(0, 3) || 'USR').toUpperCase();
+
+  const limpiar = (texto) =>
+    texto.replace(/[^a-zA-Z0-9_-]/g, '').replace(/\s+/g, '_');
+
+  const cliente_limpio = limpiar(clienteInput.value || 'Cliente');
+  const ubicacion_limpia = limpiar(ubicacionInput.value || 'Ubicacion');
+
+  const datos = {
+    usuario: usuarioSeleccionado,
+    codigo: codigoCotizacion,
+    detalles: detalles,
+    piso: pisoInput.value,
+    area: areaInput.value,
+    cliente: clienteInput.value,
+    ubicacion: ubicacionInput.value,
+    telefono: telefonoInput.value,
+    dni: dniInput.value,
+    observaciones: observaciones,
+    cuotas: montoCuotas,
+    fechas: fechasCuotas,
+  };
+
+  const response = await fetch('http://127.0.0.1:5000/crear-cotizacion-jpg', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    alert(`Error al generar el JPG: ${errorText}`);
+    return;
+  }
+
+  // Obtener el blob del archivo JPG
+  const jpgBlob = await response.blob();
+  const url = window.URL.createObjectURL(jpgBlob);
+
+  // Generar el nombre del archivo JPG
+  const nombreArchivoJPG = `CZ-${anio}-${mes_dia}-${abreviado_usuario}-${codigoCotizacion}-${cliente_limpio}-${ubicacion_limpia}.jpg`;
+
+  // Crear el enlace para descargar el archivo JPG
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivoJPG;
+  a.click();
+
+  setShowModalJPG(false);
 };
 
 // Función para cancelar la generación del PDF
 const handleCancel = () => {
   setShowModal(false);  // Cerrar el modal sin generar el PDF
+    setShowModalJPG(true);
+
+};
+const handleCancel1 = () => {
+    setShowModalJPG(false);
+
 };
 
   
@@ -457,13 +597,14 @@ const handleCancel = () => {
             </div>
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Cliente <span style={{ color: 'red' }}>*</span></label>
-                <input type="text" className="form-control" name="cliente" required />
-              </div>
-              <div className="col-md-6 mb-3">
-                <label className="form-label">DNI</label>
+                <label className="form-label">DNI / RUC</label>
                 <input type="text" className="form-control" name="dni" />
               </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Cliente / Empresa <span style={{ color: 'red' }}>*</span></label>
+                <input type="text" className="form-control" name="cliente" required />
+              </div>
+              
             </div>
 
             <div className="row">
@@ -496,7 +637,7 @@ const handleCancel = () => {
                 <input type="number" className="form-control" name="pisos" required />
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Área (m²) <span style={{ color: 'red' }}>*</span></label>
+                <label className="form-label">Área (m²) aprox.<span style={{ color: 'red' }}>*</span></label>
                 <input type="number" step="0.01" className="form-control" name="area" required />
               </div>
             </div>     
@@ -600,6 +741,61 @@ const handleCancel = () => {
   </div>
 )}
 
+ {showModalJPG && (
+  <div className="modal" style={{ display: 'block' }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">¿Deseas generar el JPG?</h5>
+          <button type="button" className="btn-close" onClick={handleCancel1}></button>
+        </div>
+        <div className="modal-body">
+          <p> ¿Quieres crear el JPG ahora?</p>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={handleCancel1}>No</button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={(e) => {
+              e.preventDefault();
+
+              const clienteInput = document.querySelector('[name="cliente"]');
+              const ubicacionInput = document.querySelector('[name="ubicacion"]');
+
+              if (!clienteInput || !ubicacionInput) {
+                alert("No se encontraron los campos requeridos.");
+                return;
+              }
+
+              // Recuperar el código de cotización en este momento
+              const selectedCotizacion = cotizacion.find(c => c.id.toString() === cotizacionSeleccionado.toString());
+              const codigoCotizacion = selectedCotizacion?.codigo || 'SIN-CODIGO';
+
+              const hoy = new Date();
+              const anio = hoy.getFullYear();
+              const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+              const dia = String(hoy.getDate()).padStart(2, '0');
+              const mes_dia = `${mes}${dia}`;
+
+              const abreviado_usuario = (usuarioSeleccionado.slice(0, 3) || 'USR').toUpperCase();
+
+              const limpiar = (texto) =>
+                texto.replace(/[^a-zA-Z0-9_-]/g, '').replace(/\s+/g, '_');
+
+              const cliente_limpio = limpiar(clienteInput.value || 'Cliente');
+              const ubicacion_limpia = limpiar(ubicacionInput.value || 'Ubicacion');
+
+              handleGenerateJPG(anio, mes_dia, abreviado_usuario, codigoCotizacion, cliente_limpio, ubicacion_limpia);
+            }}
+          >
+            Sí
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
         </div>
       </div>
     </div>

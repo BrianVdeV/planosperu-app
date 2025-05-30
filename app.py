@@ -9,6 +9,8 @@ import sys
 import uuid
 import textwrap
 from collections import defaultdict
+from pdf2image import convert_from_path
+import requests  # En lugar de node-fetch
 
 app = Flask(__name__)
 CORS(app)
@@ -16,6 +18,38 @@ CORS(app)
 def obtener_ruta_absoluta(nombre_archivo):
     base_path = os.path.dirname(os.path.abspath(sys.executable))  
     return os.path.join(base_path, nombre_archivo)
+# Token de acceso para la API
+TOKEN ='apis-token-14662.Nmuzr6WVqKvh3GRMFOxpvNhO3wZxzxlA'  # Usa el tuyo real
+
+# Ruta para consultar DNI
+@app.route('/api/dni/<numero>', methods=['GET'])
+def consultar_dni(numero):
+    try:
+        headers = {
+            'Authorization': f'Bearer {TOKEN}',
+            'Accept': 'application/json',
+        }
+        response = requests.get(f'https://api.apis.net.pe/v2/reniec/dni?numero={numero}', headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(traceback.format_exc())
+        return {'error': 'Error en la consulta al API del DNI'}, 500
+
+# Ruta para consultar RUC
+@app.route('/api/ruc/<numero>', methods=['GET'])
+def consultar_ruc(numero):
+    try:
+        headers = {
+            'Authorization': f'Bearer {TOKEN}',
+            'Accept': 'application/json',
+        }
+        response = requests.get(f'https://api.apis.net.pe/v2/sunat/ruc/full?numero={numero}', headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(traceback.format_exc())
+        return {'error': 'Error en la consulta al API del RUC'}, 500
 
 @app.route('/crear-cotizacion-pdf', methods=['POST'])
 def crear_cotizacion_pdf():
@@ -143,6 +177,127 @@ def crear_cotizacion_pdf():
     except Exception as e:
         print(traceback.format_exc())
         return f'Ocurrió un error: {str(e)}', 500
+    
+@app.route('/crear-cotizacion-jpg', methods=['POST'])
+def crear_cotizacion_jpg():
+    try:
+        # Obtener los datos recibidos
+        data = request.json
+        print("JSON recibido:", data)
+
+        codigo = data.get('codigo')
+        nombre = data.get('usuario')
+        detalles = data.get('detalles', '')
+        cliente = data.get('cliente')
+        ubicacion = data.get('ubicacion')
+        telefono = data.get('telefono')
+        dni = data.get('dni')
+        observaciones = data.get('observaciones') or ' '
+        pisos = data.get('piso')
+        area = data.get('area')
+        cuotas = data.get('cuotas', [])
+        fechas = data.get('fechas', [])
+
+        # Verificar plantilla
+        ruta_original = obtener_ruta_absoluta(f'{codigo}.xlsx')
+        if not os.path.exists(ruta_original):
+            return f'El archivo con el código "{codigo}" no se encuentra', 400
+
+        # Iniciar Excel de forma oculta
+        app_excel = xw.App(visible=False)
+        libro = app_excel.books.open(ruta_original)
+        hoja = libro.sheets[0]
+
+        # Procesar los detalles
+        limites_detalles = [15, 60]
+        partes = []
+        texto_restante = detalles.strip()
+
+        for limite in limites_detalles:
+            if len(texto_restante) <= limite:
+                partes.append(texto_restante)
+                texto_restante = ''
+            else:
+                corte = texto_restante[:limite]
+                espacio = corte.rfind(' ')
+                if espacio != -1:
+                    partes.append(texto_restante[:espacio].strip())
+                    texto_restante = texto_restante[espacio + 1:].strip()
+                else:
+                    partes.append(corte.strip())
+                    texto_restante = texto_restante[limite:].strip()
+        if texto_restante:
+            partes.append(texto_restante)
+
+        celdas_detalles = ['G11', 'B12', 'B13']
+        for i in range(min(3, len(partes))):
+            hoja.range(celdas_detalles[i]).value = partes[i]
+
+        hoja.range('B15').value = cliente
+        hoja.range('G15').value = ubicacion
+        hoja.range('G16').value = telefono
+        hoja.range('B17').value = dni
+        hoja.range('B14').value = pisos
+        hoja.range('D14').value = area
+
+        for i, linea in enumerate(observaciones.split('\n'), start=52):
+            if i > 54:
+                break
+            hoja.range(f'C{i}').value = linea
+
+        celdas_cuotas = ['C61', 'C62', 'C63', 'C64']
+        for i, monto in enumerate(cuotas):
+            if i < len(celdas_cuotas):
+                hoja.range(celdas_cuotas[i]).value = monto
+
+        celdas_fechas = ['G61', 'G62', 'G63', 'G64']
+        for i, fecha in enumerate(fechas):
+            if i < len(celdas_fechas):
+                hoja.range(celdas_fechas[i]).value = fecha
+
+        hoy = datetime.now()
+        anio = hoy.strftime("%Y")
+        mes_dia = hoy.strftime("%m%d")
+        abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
+
+        def limpiar(texto):
+            return ''.join(c for c in texto if c.isalnum() or c in (' ', '-', '_')).replace(' ', '')
+
+        cliente_limpio = limpiar(cliente or 'Cliente')
+        ubicacion_limpia = limpiar(ubicacion or 'Ubicacion')
+        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}"
+
+        hoja.range('E19').value = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}"
+
+        # Guardar temporalmente como Excel y luego como PDF
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_xlsx:
+            ruta_excel = temp_xlsx.name
+        libro.save(ruta_excel)
+
+        ruta_pdf = ruta_excel.replace(".xlsx", ".pdf")
+        hoja.to_pdf(ruta_pdf)
+
+        libro.close()
+        app_excel.quit()
+
+        # Convertir PDF a imagen
+        imagenes = convert_from_path(ruta_pdf, dpi=300)
+        ruta_jpg = ruta_pdf.replace(".pdf", ".jpg")
+        imagenes[0].save(ruta_jpg, "JPEG")
+
+        return send_file(
+            ruta_jpg,
+            as_attachment=True,
+            download_name=f"{nombre_archivo}.jpg",
+            mimetype='image/jpeg'
+        )
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return f"Error al generar la cotización en JPG: {str(e)}", 500
+
+
 @app.route('/crear-cotizacion', methods=['POST'])
 def crear_cotizacion():
   try:
@@ -265,6 +420,11 @@ def crear_cotizacion():
         import traceback
         print(traceback.format_exc())
         return f'Error al procesar el formulario: {str(e)}', 500
+  
+
+
+
+
 @app.route('/formulario-persona-natural', methods=['POST'])
 def formulario_persona_natural():
     try:
@@ -667,7 +827,6 @@ def formulario_persona_natural():
             # Añadimos el nivel al conjunto de niveles (para evitar duplicados)
             unidades_totales[numero_unidad]['niveles'].add(unidad.get('nivel', '').upper())  # Usamos upper para homogeneizar
 
-      # Asociar los propietarios con la unidad correspondiente
         # Asociar los propietarios con la unidad correspondiente
         for propietario in data.get('propietarios', []):
             unidades = propietario.get('unidad_inmobiliaria', [])
@@ -696,9 +855,14 @@ def formulario_persona_natural():
 
         # Llevar control de propietarios ya procesados
         propietarios_procesados = set()
-        
+        def nivel_sort_key(n):
+            try:
+                return (0, int(n))  # Primero los números, ordenados por su valor entero
+            except ValueError:
+                return (1, n)  
         for numero_unidad, datos in unidades_totales.items():
-            niveles_unicos = ", ".join(datos['niveles'])  # Niveles únicos
+            niveles_ordenados = sorted(datos['niveles'], key=nivel_sort_key)
+            niveles_unicos = ", ".join(niveles_ordenados)
             area_techada_total = datos['area_techada_total']
             area_libre_total = datos['area_libre_total']
 
@@ -729,7 +893,8 @@ def formulario_persona_natural():
                 propietarios_texto = "\n".join(propietarios)
                 hoja_formulario.range(f'C{fila_ui}').value = propietarios_texto
                 hoja_formulario.range(f'A{fila_ui}').value = item_number
-
+                altura_base = 25  # Altura base por propietario (puedes ajustar este valor)
+                hoja_formulario.range(f'{fila_ui}:{fila_ui}').row_height = altura_base * len(propietarios)
                 # Escribir cada propietario en una fila de la columna B
                 for i, prop in enumerate(propietarios):
                     hoja_formulario.range(f'B{fila_propietarios + i * 2}').value = prop
@@ -755,6 +920,7 @@ def formulario_persona_natural():
                 fila_ui += 1
                 if propietario not in propietarios_procesados:
                     # Rango para combinar filas según unidades del propietario
+                    
                     inicio_merge = fila_ui - 1
                     fin_merge = fila_ui + len(unidades_prop) - 1
 
@@ -766,6 +932,8 @@ def formulario_persona_natural():
                     # Combinar y escribir número de ítem en A (igual)
                     hoja_formulario.range(f'A{inicio_merge}:A{fin_merge}').merge()
                     hoja_formulario.range(f'A{inicio_merge}').value = item_number
+                    fila_ui -= 1
+
                     # Escribir cada propietario en una fila de la columna B
                     for i, prop in enumerate(propietarios):
                         hoja_formulario.range(f'B{fila_propietarios + i * 2}').value = prop
