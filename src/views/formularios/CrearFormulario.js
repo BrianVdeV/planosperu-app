@@ -13,16 +13,20 @@ export default function RegistrarUnidadInmobiliaria() {
       area_libre: '',
       por_frente: '',
       tramo_frente: '',
-      tramo_frente_num: '',
+       tramo_frente_num: 0,
+  tramo_frente_array: [],
       por_derecha: '',
       tramo_derecha: '',
-      tramo_derecha_num: '',
+      tramo_derecha_num: 0,
+        tramo_derecha_array: [],
       por_izquierda: '',
       tramo_izquierda: '',
-      tramo_izquierda_num: '',
+      tramo_izquierda_num: 0,
+      tramo_izquierda_array: [],
       por_fondo: '',
       tramo_fondo: '',
-      tramo_fondo_num: '',
+      tramo_fondo_num: 0,
+      tramo_fondo_array: [],
     },
   ]);
   const handleEliminarUnidad = (index) => {
@@ -204,26 +208,47 @@ const handleAddUnidadInmobiliaria = () => {
   };
 
   
-  const handleChangeUnidadInmobiliaria = (e, index) => {
-    const { name, value } = e.target;
-  
-    setFormDataUnidadInmobiliarias((prev) => {
-      const updated = [...prev];
-      const unidadActual = { ...updated[index], [name]: value };
-  
-      if (
-        unidadActual.area_ocupada !== '' &&
-        unidadActual.area_techada !== '' &&
-        !isNaN(unidadActual.area_ocupada) &&
-        !isNaN(unidadActual.area_techada)
-      ) {
-        unidadActual.area_libre = (unidadActual.area_ocupada - unidadActual.area_techada).toString();
-      }
-  
-      updated[index] = unidadActual;
-      return updated;
-    });
-  };
+ const handleChangeUnidadInmobiliaria = (e, index) => {
+  const { name, value } = e.target;
+
+  setFormDataUnidadInmobiliarias((prev) => {
+    const updated = [...prev];
+    const unidadActual = { ...updated[index] };
+
+    if (name.endsWith("_num")) {
+      const keyBase = name.replace("_num", ""); // ej. tramo_frente
+      const num = parseInt(value) || 0;
+      unidadActual[name] = num;
+      unidadActual[`${keyBase}_array`] = Array(num).fill("");
+      unidadActual[keyBase] = "";
+    } 
+    else if (name.includes("_array_")) {
+      const baseArrayName = name.substring(0, name.lastIndexOf("_array_") + 6); // ej. "tramo_frente_array"
+      const idx = parseInt(name.substring(name.lastIndexOf("_array_") + 7)); // ej. 0
+      unidadActual[baseArrayName] = unidadActual[baseArrayName] || [];
+      unidadActual[baseArrayName][idx] = value;
+      const keyBase = baseArrayName.replace("_array", "");
+      unidadActual[keyBase] = unidadActual[baseArrayName].join(",");
+    } 
+    else {
+      unidadActual[name] = value;
+    }
+
+    if (
+      unidadActual.area_ocupada !== '' &&
+      unidadActual.area_techada !== '' &&
+      !isNaN(unidadActual.area_ocupada) &&
+      !isNaN(unidadActual.area_techada)
+    ) {
+      unidadActual.area_libre = (unidadActual.area_ocupada - unidadActual.area_techada).toString();
+    }
+
+    updated[index] = unidadActual;
+    return updated;
+  });
+};
+
+
   const handleChangeAreaComun = (e, index) => {
     const { name, value } = e.target;
   
@@ -673,16 +698,21 @@ const handleAddUnidadInmobiliaria = () => {
               </div>
 
               {/* Input para el valor del tramo */}
-              <div style={{ flex: 3 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {Array.from({ length: unidad.tramo_frente_num || 0 }).map((_, i) => (
                 <CFormInput
-                  name="tramo_frente"
-                  label=" "
-                  value={unidad.tramo_frente}
+                  key={`tramo_frente_array_${i}`}
+                  type="number"
+                  name={`tramo_frente_array_${i}`}
+                  label={`Tramo ${i + 1}`}
+                  value={unidad.tramo_frente_array?.[i] || ""}
                   onChange={(e) => handleChangeUnidadInmobiliaria(e, index)}
                   required
-                  placeholder="Descripción del tramo"
+                  placeholder={`Valor del tramo ${i + 1}`}
                 />
-              </div>
+              ))}
+            </div>
+
             </div>
             <div>
               <CFormInput
