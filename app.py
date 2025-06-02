@@ -454,15 +454,16 @@ def formulario_persona_natural():
         libro = app_excel.books.open(ruta_formulario)
         hoja = libro.sheets[0]  # Hoja principal
         hoja_formulario = libro.sheets['FORMULARIO']  # Hoja de formulario
-
+        propietarios = data.get('propietarios',[])
+        primer_propietario = propietarios[0]
         # Llenar los campos básicos del formulario con los datos de 'ot'
         hoja.range('D1').value = ot_data.get('ot', '')
         hoja.range('D2').value = ot_data.get('siglas', '')
-        hoja.range('D5').value = ot_data.get('apellidos', '')
-        hoja.range('D6').value = ot_data.get('nombres', '')
-        hoja.range('D7').value = ot_data.get('dni', '')
-        hoja.range('D8').value = ot_data.get('direccion', '')
-        hoja.range('D10').value = ot_data.get('conyugue', '')
+        hoja.range('D5').value = primer_propietario.get('apellidos', '')
+        hoja.range('D6').value = primer_propietario.get('nombres', '')
+        hoja.range('D7').value = primer_propietario.get('dni', '')
+        hoja.range('D8').value = primer_propietario.get('direccion', '')
+        hoja.range('D10').value = primer_propietario.get('conyugue', '')
         hoja.range('D11').value = ot_data.get('area_m2', '')
         hoja.range('D12').value = ot_data.get('partida_registral', '')
         hoja.range('D13').value = ot_data.get('valor_unitario', '')
@@ -627,7 +628,6 @@ def formulario_persona_natural():
 
             # Asigna el valor directamente a la celda
             hoja_formulario.range(f'J211').value = fecha_terminacion
-            propietarios = data.get('propietarios',[])
             print("Propietarios:", propietarios)
             # Sumar
             areas_por_nivel[nivel]['ocupada'] += area_ocupada
@@ -687,18 +687,18 @@ def formulario_persona_natural():
 
             # Llenar los campos del perímetro de la unidad
 
-            hoja_formulario.range(f'H{417 + offset}').value = unidad.get('por_frente', '')
-            hoja_formulario.range(f'H{418 + offset}').value = unidad.get('tramo_frente', '')
-            hoja_formulario.range(f'F{418 + offset}').value = unidad.get('tramo_frente_num', '')
-            hoja_formulario.range(f'H{419 + offset}').value = unidad.get('por_derecha', '')
-            hoja_formulario.range(f'H{420 + offset}').value = unidad.get('tramo_derecha', '')
-            hoja_formulario.range(f'F{420 + offset}').value = unidad.get('tramo_derecha_num', '')
-            hoja_formulario.range(f'H{421 + offset}').value = unidad.get('por_izquierda', '')
-            hoja_formulario.range(f'H{422 + offset}').value = unidad.get('tramo_izquierda', '')
-            hoja_formulario.range(f'F{422 + offset}').value = unidad.get('tramo_izquierda_num', '')
-            hoja_formulario.range(f'H{423 + offset}').value = unidad.get('por_fondo', '')
-            hoja_formulario.range(f'H{424 + offset}').value = unidad.get('tramo_fondo', '')
-            hoja_formulario.range(f'F{424 + offset}').value = unidad.get('tramo_fondo_num', '')
+            hoja_formulario.range(f'H{417 + offset}').value = comun.get('por_frente', '')
+            hoja_formulario.range(f'H{418 + offset}').value = comun.get('tramo_frente', '')
+            hoja_formulario.range(f'F{418 + offset}').value = comun.get('tramo_frente_num', '')
+            hoja_formulario.range(f'H{419 + offset}').value = comun.get('por_derecha', '')
+            hoja_formulario.range(f'H{420 + offset}').value = comun.get('tramo_derecha', '')
+            hoja_formulario.range(f'F{420 + offset}').value = comun.get('tramo_derecha_num', '')
+            hoja_formulario.range(f'H{421 + offset}').value = comun.get('por_izquierda', '')
+            hoja_formulario.range(f'H{422 + offset}').value = comun.get('tramo_izquierda', '')
+            hoja_formulario.range(f'F{422 + offset}').value = comun.get('tramo_izquierda_num', '')
+            hoja_formulario.range(f'H{423 + offset}').value = comun.get('por_fondo', '')
+            hoja_formulario.range(f'H{424 + offset}').value = comun.get('tramo_fondo', '')
+            hoja_formulario.range(f'F{424 + offset}').value = comun.get('tramo_fondo_num', '')
            # Crear el orden de los niveles basado en los niveles disponibles
             niveles_presentes = []
 
@@ -834,7 +834,8 @@ def formulario_persona_natural():
             for unidad in unidades:
                 unidad = unidad.strip()
                 if unidad in unidades_totales:
-                    unidades_totales[unidad]['propietarios'].append(propietario.get('propietario'))
+                    nombre_completo = f"{propietario.get('nombres', '').strip()} {propietario.get('apellidos', '').strip()}"
+                    unidades_totales[unidad]['propietarios'].append(nombre_completo)
                 else:
                     print(f"Unidad '{unidad}' no encontrada en unidades_totales")
 
