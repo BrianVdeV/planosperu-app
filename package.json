@@ -1,27 +1,27 @@
 {
-  "name": "planos-peru",         
-"version": "1.0.21",             
-"description": "Planos Peru",    
-"homepage": ".",                 
- "bugs": {
-  "url": "https://github.com/kimberly31-HC/planosperu-app/issues"
-},
-"repository": {
-  "type": "git",
-  "url": "https://github.com/kimberly31-HC/planosperu-app.git"
-},
+  "name": "planos-peru",
+  "version": "1.0.21",
+  "description": "Planos Peru",
+  "homepage": ".",
+  "bugs": {
+    "url": "https://github.com/kimberly31-HC/planosperu-app/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kimberly31-HC/planosperu-app.git"
+  },
   "license": "MIT",
   "author": "The CoreUI Team (https://github.com/orgs/coreui/people)",
   "scripts": {
-    "start": "react-scripts start",
+    "build": "vite build",
+    "lint": "eslint",
+    "serve": "vite preview",
     "react": "vite",
+    "start": "react-scripts start",
     "flask": "python app.py",
     "electron:dev": "npm-run-all --parallel flask electron",
     "dev": "cross-env NODE_ENV=development npm-run-all --parallel flask react",
-    "build": "vite build",
-    "lint": "eslint",
     "pack": "electron-builder --dir",
-    "serve": "vite preview",
     "electron": "electron main.js",
     "dist": "electron-builder"
   },
@@ -83,234 +83,231 @@
       "node_modules/**/*"
     ],
     "publish": [
-        {
-          "provider": "github",
-          "owner": "kimberly31-HC",
-          "repo": "planosperu-app",
-          "releaseType": "release"
-        }
-      ],
-  "extraResources": [
-    {
-      "from": "./dist/app.exe",
-      "to": "dist/app.exe"
-    },
-    {
+      {
+        "provider": "github",
+        "owner": "kimberly31-HC",
+        "repo": "planosperu-app",
+        "releaseType": "release"
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "./dist/app.exe",
+        "to": "dist/app.exe"
+      },
+      {
         "from": "./docs/Formulario Persona Natural.xlsm",
         "to": "dist/Formulario Persona Natural.xlsm"
-    },
-    {
-      "from": "./docs/DEC-SUB.xlsx",
-      "to": "dist/DEC-SUB.xlsx"
-  },
-  {
-      "from": "./docs/DEC-FAB.xlsx",
-      "to": "dist/DEC-FAB.xlsx"
-  },
-  {
-      "from": "./docs/IND.xlsx",
-      "to": "dist/IND.xlsx"
-  },
-  {
-      "from": "./docs/SUB-MUN.xlsx",
-      "to": "dist/SUB-MUN.xlsx"
-  },
-  {
-      "from": "./docs/IND-MUN.xlsx",
-      "to": "dist/IND-MUN.xlsx"
-  },
-  {
-      "from": "./docs/DEC-IND.xlsx",
-      "to": "dist/DEC-IND.xlsx"
-  },
-  {
-      "from": "./docs/BUS-CAT.xlsx",
-      "to": "dist/BUS-CAT.xlsx"
-  },
-  {
-      "from": "./docs/VIS-PLA.xlsx",
-      "to": "dist/VIS-PLA.xlsx"
-  },
-  {
-      "from": "./docs/PLA-OBR.xlsx",
-      "to": "dist/PLA-OBR.xlsx"
-  },
-  {
-      "from": "./docs/LIC-CON.xlsx",
-      "to": "dist/LIC-CON.xlsx"
-  },
-  {
-      "from": "./docs/LIC-FUN.xlsx",
-      "to": "dist/LIC-FUN.xlsx"
-  },
-  {
-      "from": "./docs/SUC-INT.xlsx",
-      "to": "dist/SUC-INT.xlsx"
-  },
-  {
-      "from": "./docs/SUC-DEC.xlsx",
-      "to": "dist/SUC-DEC.xlsx"
-  },
-  {
-      "from": "./docs/DIV-PAR.xlsx",
-      "to": "dist/DIV-PAR.xlsx"
-  },
-  {
-    "from": "./docs/EXP-TEC.xlsx",
-    "to": "dist/EXP-TEC.xlsx"
-},
-  {
-      "from": "./docs/ANT-LEG.xlsx",
-      "to": "dist/ANT-LEG.xlsx"
-  },
-  {
-      "from": "./docs/CON-MUL.xlsx",
-      "to": "dist/CON-MUL.xlsx"
-  },
-  {
-      "from": "./docs/FAC-ELE.xlsx",
-      "to": "dist/FAC-ELE.xlsx"
-  },
-  {
-      "from": "./docs/FAC-SAN.xlsx",
-      "to": "dist/FAC-SAN.xlsx"
-  },
-  {
-      "from": "./docs/LEV-CAR.xlsx",
-      "to": "dist/LEV-CAR.xlsx"
-  },
-  {
-      "from": "./docs/NOT-MUN.xlsx",
-      "to": "dist/NOT-MUN.xlsx"
-  },
-  {
-      "from": "./docs/LIC-DEM.xlsx",
-      "to": "dist/LIC-DEM.xlsx"
-  },
-  {
-      "from": "./docs/BUS-MEM.xlsx",
-      "to": "dist/BUS-MEM.xlsx"
-  },
-  {
-      "from": "./docs/SOL-MED.xlsx",
-      "to": "dist/SOL-MED.xlsx"
-  },
-  {
-      "from": "./docs/ADE-MOD.xlsx",
-      "to": "dist/ADE-MOD.xlsx"
-  },
-  {
-      "from": "./docs/TAS-INM.xlsx",
-      "to": "dist/TAS-INM.xlsx"
-  },
-  {
-      "from": "./docs/LEV-ARE.xlsx",
-      "to": "dist/LEV-ARE.xlsx"
-  },
-  {
-      "from": "./docs/COM-VEN.xlsx",
-      "to": "dist/COM-VEN.xlsx"
-  },
-  {
-      "from": "./docs/DEC-CON.xlsx",
-      "to": "dist/DEC-CON.xlsx"
-  },
-  {
-      "from": "./docs/DEC-DIV.xlsx",
-      "to": "dist/DEC-DIV.xlsx"
-  },
-  {
-      "from": "./docs/MED-PLU.xlsx",
-      "to": "dist/MED-PLU.xlsx"
-  },
-  {
-      "from": "./docs/OBR-CON.xlsx",
-      "to": "dist/OBR-CON.xlsx"
-  },
-  {
-      "from": "./docs/NOT-NOT.xlsx",
-      "to": "dist/NOT-NOT.xlsx"
-  },
-  {
-      "from": "./docs/FAC-ALC.xlsx",
-      "to": "dist/FAC-ALC.xlsx"
-  },
-  {
-      "from": "./docs/DEC-MIN.xlsx",
-      "to": "dist/DEC-MIN.xlsx"
-  },
-  {
-      "from": "./docs/EVA-EST.xlsx",
-      "to": "dist/EVA-EST.xlsx"
-  },
-  {
-      "from": "./docs/TRA-DEC.xlsx",
-      "to": "dist/TRA-DEC.xlsx"
-  },
-  {
-      "from": "./docs/ACT-AUT.xlsx",
-      "to": "dist/ACT-AUT.xlsx"
-  },
-  {
-      "from": "./docs/DIV-DON.xlsx",
-      "to": "dist/DIV-DON.xlsx"
-  },
-  {
-      "from": "./docs/DEC-DON.xlsx",
-      "to": "dist/DEC-DON.xlsx"
-  },
-  {
-      "from": "./docs/DIS-3D.xlsx",
-      "to": "dist/DIS-3D.xlsx"
-  },
-  {
-      "from": "./docs/CER-NUM.xlsx",
-      "to": "dist/CER-NUM.xlsx"
-  },
-  {
-      "from": "./docs/ACT-PLA.xlsx",
-      "to": "dist/ACT-PLA.xlsx"
-  },
-  {
-      "from": "./docs/INF-PRE.xlsx",
-      "to": "dist/INF-PRE.xlsx"
-  },
-  {
-      "from": "./docs/DON.xlsx",
-      "to": "dist/DON.xlsx"
-  },
-  {
-      "from": "./docs/BUS-OTR.xlsx",
-      "to": "dist/BUS-OTR.xlsx"
-  },
-  {
-      "from": "./docs/PLA-NOD.xlsx",
-      "to": "dist/PLA-NOD.xlsx"
-  },
-  {
-      "from": "./docs/PRE-NOT.xlsx",
-      "to": "dist/PRE-NOT.xlsx"
-  },
-  {
-      "from": "./docs/PRE-JUD.xlsx",
-      "to": "dist/PRE-JUD.xlsx"
-  },
-  {
-      "from": "./docs/VIS-PRE.xlsx",
-      "to": "dist/VIS-PRE.xlsx"
-  },
-  {
-      "from": "./docs/HAB-URB.xlsx",
-      "to": "dist/HAB-URB.xlsx"
-  },
-  {
-      "from": "./docs/PLA-ING.xlsx",
-      "to": "dist/PLA-ING.xlsx"
-  }
-  ],
-
-    
-
+      },
+      {
+        "from": "./docs/DEC-SUB.xlsx",
+        "to": "dist/DEC-SUB.xlsx"
+      },
+      {
+        "from": "./docs/DEC-FAB.xlsx",
+        "to": "dist/DEC-FAB.xlsx"
+      },
+      {
+        "from": "./docs/IND.xlsx",
+        "to": "dist/IND.xlsx"
+      },
+      {
+        "from": "./docs/SUB-MUN.xlsx",
+        "to": "dist/SUB-MUN.xlsx"
+      },
+      {
+        "from": "./docs/IND-MUN.xlsx",
+        "to": "dist/IND-MUN.xlsx"
+      },
+      {
+        "from": "./docs/DEC-IND.xlsx",
+        "to": "dist/DEC-IND.xlsx"
+      },
+      {
+        "from": "./docs/BUS-CAT.xlsx",
+        "to": "dist/BUS-CAT.xlsx"
+      },
+      {
+        "from": "./docs/VIS-PLA.xlsx",
+        "to": "dist/VIS-PLA.xlsx"
+      },
+      {
+        "from": "./docs/PLA-OBR.xlsx",
+        "to": "dist/PLA-OBR.xlsx"
+      },
+      {
+        "from": "./docs/LIC-CON.xlsx",
+        "to": "dist/LIC-CON.xlsx"
+      },
+      {
+        "from": "./docs/LIC-FUN.xlsx",
+        "to": "dist/LIC-FUN.xlsx"
+      },
+      {
+        "from": "./docs/SUC-INT.xlsx",
+        "to": "dist/SUC-INT.xlsx"
+      },
+      {
+        "from": "./docs/SUC-DEC.xlsx",
+        "to": "dist/SUC-DEC.xlsx"
+      },
+      {
+        "from": "./docs/DIV-PAR.xlsx",
+        "to": "dist/DIV-PAR.xlsx"
+      },
+      {
+        "from": "./docs/EXP-TEC.xlsx",
+        "to": "dist/EXP-TEC.xlsx"
+      },
+      {
+        "from": "./docs/ANT-LEG.xlsx",
+        "to": "dist/ANT-LEG.xlsx"
+      },
+      {
+        "from": "./docs/CON-MUL.xlsx",
+        "to": "dist/CON-MUL.xlsx"
+      },
+      {
+        "from": "./docs/FAC-ELE.xlsx",
+        "to": "dist/FAC-ELE.xlsx"
+      },
+      {
+        "from": "./docs/FAC-SAN.xlsx",
+        "to": "dist/FAC-SAN.xlsx"
+      },
+      {
+        "from": "./docs/LEV-CAR.xlsx",
+        "to": "dist/LEV-CAR.xlsx"
+      },
+      {
+        "from": "./docs/NOT-MUN.xlsx",
+        "to": "dist/NOT-MUN.xlsx"
+      },
+      {
+        "from": "./docs/LIC-DEM.xlsx",
+        "to": "dist/LIC-DEM.xlsx"
+      },
+      {
+        "from": "./docs/BUS-MEM.xlsx",
+        "to": "dist/BUS-MEM.xlsx"
+      },
+      {
+        "from": "./docs/SOL-MED.xlsx",
+        "to": "dist/SOL-MED.xlsx"
+      },
+      {
+        "from": "./docs/ADE-MOD.xlsx",
+        "to": "dist/ADE-MOD.xlsx"
+      },
+      {
+        "from": "./docs/TAS-INM.xlsx",
+        "to": "dist/TAS-INM.xlsx"
+      },
+      {
+        "from": "./docs/LEV-ARE.xlsx",
+        "to": "dist/LEV-ARE.xlsx"
+      },
+      {
+        "from": "./docs/COM-VEN.xlsx",
+        "to": "dist/COM-VEN.xlsx"
+      },
+      {
+        "from": "./docs/DEC-CON.xlsx",
+        "to": "dist/DEC-CON.xlsx"
+      },
+      {
+        "from": "./docs/DEC-DIV.xlsx",
+        "to": "dist/DEC-DIV.xlsx"
+      },
+      {
+        "from": "./docs/MED-PLU.xlsx",
+        "to": "dist/MED-PLU.xlsx"
+      },
+      {
+        "from": "./docs/OBR-CON.xlsx",
+        "to": "dist/OBR-CON.xlsx"
+      },
+      {
+        "from": "./docs/NOT-NOT.xlsx",
+        "to": "dist/NOT-NOT.xlsx"
+      },
+      {
+        "from": "./docs/FAC-ALC.xlsx",
+        "to": "dist/FAC-ALC.xlsx"
+      },
+      {
+        "from": "./docs/DEC-MIN.xlsx",
+        "to": "dist/DEC-MIN.xlsx"
+      },
+      {
+        "from": "./docs/EVA-EST.xlsx",
+        "to": "dist/EVA-EST.xlsx"
+      },
+      {
+        "from": "./docs/TRA-DEC.xlsx",
+        "to": "dist/TRA-DEC.xlsx"
+      },
+      {
+        "from": "./docs/ACT-AUT.xlsx",
+        "to": "dist/ACT-AUT.xlsx"
+      },
+      {
+        "from": "./docs/DIV-DON.xlsx",
+        "to": "dist/DIV-DON.xlsx"
+      },
+      {
+        "from": "./docs/DEC-DON.xlsx",
+        "to": "dist/DEC-DON.xlsx"
+      },
+      {
+        "from": "./docs/DIS-3D.xlsx",
+        "to": "dist/DIS-3D.xlsx"
+      },
+      {
+        "from": "./docs/CER-NUM.xlsx",
+        "to": "dist/CER-NUM.xlsx"
+      },
+      {
+        "from": "./docs/ACT-PLA.xlsx",
+        "to": "dist/ACT-PLA.xlsx"
+      },
+      {
+        "from": "./docs/INF-PRE.xlsx",
+        "to": "dist/INF-PRE.xlsx"
+      },
+      {
+        "from": "./docs/DON.xlsx",
+        "to": "dist/DON.xlsx"
+      },
+      {
+        "from": "./docs/BUS-OTR.xlsx",
+        "to": "dist/BUS-OTR.xlsx"
+      },
+      {
+        "from": "./docs/PLA-NOD.xlsx",
+        "to": "dist/PLA-NOD.xlsx"
+      },
+      {
+        "from": "./docs/PRE-NOT.xlsx",
+        "to": "dist/PRE-NOT.xlsx"
+      },
+      {
+        "from": "./docs/PRE-JUD.xlsx",
+        "to": "dist/PRE-JUD.xlsx"
+      },
+      {
+        "from": "./docs/VIS-PRE.xlsx",
+        "to": "dist/VIS-PRE.xlsx"
+      },
+      {
+        "from": "./docs/HAB-URB.xlsx",
+        "to": "dist/HAB-URB.xlsx"
+      },
+      {
+        "from": "./docs/PLA-ING.xlsx",
+        "to": "dist/PLA-ING.xlsx"
+      }
+    ],
     "directories": {
       "output": "dist"
     },
