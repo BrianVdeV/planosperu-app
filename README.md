@@ -85,6 +85,12 @@ coreui-free-react-admin-template
 4. export GH_TOKEN=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
 5. npx electron-builder --publish always (DEBE DECIR 100% PARA PODER VER LA NUEVA VERSION)
 
+---- PARA FLASK -----
+pip show pyinstaller
+pip install pyinstaller
+pyinstaller --onefile app.py
+
+
 ## Creadores
 
 **Kimberly**

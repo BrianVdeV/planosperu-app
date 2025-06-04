@@ -454,8 +454,32 @@ def formulario_persona_natural():
         libro = app_excel.books.open(ruta_formulario)
         hoja = libro.sheets[0]  # Hoja principal
         hoja_formulario = libro.sheets['FORMULARIO']  # Hoja de formulario
+        hoja_anexo1 = libro.sheets['Anexo 1']
         propietarios = data.get('propietarios',[])
         primer_propietario = propietarios[0]
+        hoja_anexo1.range('B9').value = primer_propietario.get('apellidos', '')
+        hoja_anexo1.range('H9').value = primer_propietario.get('nombres', '')
+        hoja_anexo1.range('H12').value = primer_propietario.get('dni', '')
+        hoja_anexo1.range('B14').value = primer_propietario.get('direccion', '')
+        hoja_anexo1.range('B19').value = primer_propietario.get('conyugue', '')
+         # Asignar estado civil (casado, soltero, etc.)
+        estado1 = primer_propietario.get('estado_civil', '').lower()
+        shapes = {
+            'soltero': 'cbxEstado1_1',
+            'casado': 'cbxEstado2_1',
+            'viudo': 'cbxEstado3_1',
+            'divorciado': 'cbxEstado4_1',
+            'separada juridicamente': 'cbxEstado5_1'
+        }
+        # Verificar cuál es el estado civil y marcarlo en el formulario
+        shape_names = [s.Name for s in hoja_anexo1.api.Shapes]
+        for shape_name in shapes.values():
+            if shape_name in shape_names:
+                hoja_anexo1.api.Shapes(shape_name).TextFrame.Characters().Text = ""
+
+        if estado1 in shapes and shapes[estado1] in shape_names:
+            hoja_anexo1.api.Shapes(shapes[estado1]).TextFrame.Characters().Text = "X"
+            
         # Llenar los campos básicos del formulario con los datos de 'ot'
         hoja.range('D1').value = ot_data.get('ot', '')
         hoja.range('D2').value = ot_data.get('siglas', '')
@@ -480,7 +504,81 @@ def formulario_persona_natural():
                            'azotea': {'ocupada': 0, 'techada': 0, 'libre': 0}, }
         # Obtener la lista de unidades inmobiliarias
         unidades = data.get('unidades_inmobiliaria', [])
-        
+        cantidad_extra = len(propietarios) - 1
+       # Ocultar filas base
+        hoja_anexo1.api.Rows("50:112").Hidden = True
+
+        # Diccionario base para nombres de checkboxes de estado civil
+        estado_base = {
+            'soltero': 'cbxEstado1_{}',
+            'casado': 'cbxEstado2_{}',
+            'viudo': 'cbxEstado3_{}',
+            'divorciado': 'cbxEstado4_{}',
+            'separada juridicamente': 'cbxEstado5_{}'
+        }
+
+        shape_names = [s.Name for s in hoja_anexo1.api.Shapes]
+
+        def insertar_propietario(index_excel, propietario, offset_base, bloque_num=0):
+            offset = offset_base + (index_excel * 21)
+            num_prop = (bloque_num * 3) + index_excel + 1  
+
+            hoja_anexo1.range(f"B{31 + offset}").value = propietario.get("apellidos", "")
+            hoja_anexo1.range(f"H{31 + offset}").value = propietario.get("nombres", "")
+            hoja_anexo1.range(f"H{34 + offset}").value = propietario.get("dni", "")
+            hoja_anexo1.range(f"B{36 + offset}").value = propietario.get("direccion", "")
+            hoja_anexo1.range(f"B{41 + offset}").value = propietario.get("conyugue", "")
+
+            estado = propietario.get("estado_civil", "").lower()
+
+            # Limpiar todos los checkboxes
+            for cbx in estado_base.values():
+                nombre_shape = cbx.format(num_prop)
+                if nombre_shape in shape_names:
+                    hoja_anexo1.api.Shapes(nombre_shape).TextFrame.Characters().Text = ""
+
+            # Marcar el checkbox correcto
+            if estado in estado_base:
+                nombre_shape = estado_base[estado].format(num_prop)
+                if nombre_shape in shape_names:
+                    hoja_anexo1.api.Shapes(nombre_shape).TextFrame.Characters().Text = "X"
+
+        # -------------- PRIMER PASO: Duplicar bloques extra antes de llenar datos -----------------
+
+        # Número de propietarios visibles (desde el segundo en adelante)
+        propietarios_visibles = propietarios[1:]
+
+        # Mostrar filas base si hay al menos 3 propietarios visibles
+        if len(propietarios_visibles) >= 3:
+            hoja_anexo1.api.Rows("50:112").Hidden = False
+
+        # Calcular si es necesario bloques adicionales (3 propietarios por bloque)
+        num_propietarios_extra = len(propietarios_visibles) - 3  # los primeros 3 ya están en bloque base
+        if num_propietarios_extra > 0:
+            bloques_adicionales = (num_propietarios_extra + 2) // 3  # bloques de 3 propietarios
+
+            for b in range(bloques_adicionales):
+                origen = hoja_anexo1.range("50:112")
+                destino_inicio = 113 + (63 * b)
+                destino_fin = destino_inicio + 62
+                destino = hoja_anexo1.range(f"{destino_inicio}:{destino_fin}")
+
+                origen.copy(destino)
+                hoja_anexo1.api.HPageBreaks.Add(hoja_anexo1.range(f"A{destino_inicio}").api)
+
+                if b == 0:
+                        hoja_anexo1.api.HPageBreaks.Add(hoja_anexo1.range(f"A{destino_inicio}").api)
+        # -------------- SEGUNDO PASO: Insertar datos en todos los bloques --------------
+
+        # Ahora insertamos todos los propietarios visibles, distribuyéndolos en bloques y filas
+        for i, propietario in enumerate(propietarios_visibles):
+            bloque_num = i // 3  # 0 para primeros 3, 1 para los siguientes, etc.
+            index_en_bloque = i % 3  # posición 0,1,2 dentro del bloque
+            offset_base = bloque_num * 63  # salto entre bloques
+
+            insertar_propietario(index_en_bloque, propietario, offset_base, bloque_num)
+
+
         # Imprimir los datos de las unidades inmobiliarias
         print("Unidades inmobiliarias:", unidades)
         
@@ -507,7 +605,6 @@ def formulario_persona_natural():
             areas_por_nivel[nivel]['ocupada'] += area_ocupada
             areas_por_nivel[nivel]['techada'] += area_techada
             areas_por_nivel[nivel]['libre'] += area_libre
-
             # Imprimir los datos de cada unidad inmobiliaria
             print(f"Unidad inmobiliaria {i + 1}:", unidad)
             numero_unidad= unidad.get('numero_unidad', '')
