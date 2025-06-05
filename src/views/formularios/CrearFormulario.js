@@ -200,13 +200,8 @@ const handleAddUnidadInmobiliaria = () => {
   const [formDataOT, setFormDataOT] = useState({
     ot: "", // OT
     siglas: "", // Siglas
-    apellidos: "", // Apellidos
-    nombres: "", // Nombres
-    direccion: "", // Dirección
     valor_unitario:"",
     partida_registral:"",
-    dni: "", // DNI
-    estado_civil: "", // Estado civil
     area_m2:"",
     conyugue:"",
   });
