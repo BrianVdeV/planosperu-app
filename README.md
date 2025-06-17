@@ -70,15 +70,18 @@ coreui-free-react-admin-template
 ## PASOS PARA EJECUTAR
 
 - PROBAR LOCALMENTE (ABRE EL APP del BACKEND)
+
 1. npm run build
 2. npm run electron
 
 - PROBAR LOCALMENTE CON MODIFICACIONES COMO AÑADIR DOCUMENTOS EXCEL ENTRE OTROS (ABRE EL APP del BACKEND O SI DESEAS EJECUTA LA APLICACION EN GENERAL)
+
 1. npm run build
 2. npm run dist
 3. npm run electron
 
 - PUBLICAR VERSIONES
+
 1. Cambiar la version del PACKAGE.JSON
 2. npm run install
 3. npm run build
@@ -88,8 +91,7 @@ coreui-free-react-admin-template
 ---- PARA FLASK -----
 pip show pyinstaller
 pip install pyinstaller
-pyinstaller --onefile app.py
-
+python -m PyInstaller --onefile app.py
 
 ## Creadores
 
