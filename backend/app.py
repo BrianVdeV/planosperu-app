@@ -17,6 +17,12 @@ app = Flask(__name__)
 CORS(app)
 
 
+def get_resource_path(relative_path):
+    """Devuelve la ruta absoluta al recurso, funciona dentro y fuera de PyInstaller"""
+    base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+    return os.path.join(base_path, relative_path)
+
+
 def obtener_ruta_absoluta(nombre_archivo):
     base_path = os.path.dirname(os.path.abspath(sys.executable))
     return os.path.join(base_path, nombre_archivo)
@@ -336,7 +342,7 @@ def crear_cotizacion():
         fechas = data.get('fechas', [])
 
         # Verificar si el archivo de plantilla existe con el nombre del código
-        ruta_original = obtener_ruta_absoluta(f'{codigo}.xlsx')
+        ruta_original = get_resource_path(f'docs/{codigo}.xlsx')
         if not os.path.exists(ruta_original):
             return f'El archivo con el código "{codigo}" no se encuentra', 400
 
