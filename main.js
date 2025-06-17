@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, dialog } = require('electron')
 const path = require('path')
 const { spawn } = require('child_process')
 const fs = require('fs')
@@ -30,19 +30,42 @@ app.on('ready', () => {
   // Configura el feed de actualizaciones de GitHub
   autoUpdater.setFeedURL({
     provider: 'github',
-    owner: 'kimberly31-HC', // Reemplaza con tu nombre de usuario en GitHub
-    repo: 'planosperu-app', // Reemplaza con el nombre de tu repositorio en GitHub
-    token: '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',
+    owner: 'BrianVdeV',
+    repo: 'planosperu-app',
+    token: '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',
   })
 
   // Configuración del autoUpdater
   autoUpdater.autoDownload = true
   autoUpdater.checkForUpdatesAndNotify() // Este ya hace la verificación y notificación
 
-  // Evento cuando se descargan las actualizaciones
-  autoUpdater.on('update-downloaded', () => {
-    console.log('Actualización descargada')
-    autoUpdater.quitAndInstall(false, true) // Instala la actualización inmediatamente
+  autoUpdater.on('update-available', () => {
+    console.log('Actualización disponible. Descargando...')
+  })
+
+  autoUpdater.on('update-downloaded', async () => {
+    console.log('Actualización descargada.')
+
+    const result = await dialog.showMessageBox(win, {
+      type: 'question',
+      buttons: ['Reiniciar ahora', 'Más tarde'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Actualización lista',
+      message: 'Se ha descargado una nueva versión de Planos Perú.',
+      detail: '¿Deseas reiniciar la aplicación ahora para aplicar la actualización?',
+    })
+
+    if (result.response === 0) {
+      // Reinicia e instala
+      autoUpdater.quitAndInstall(false, true)
+    } else {
+      console.log('El usuario decidió actualizar más tarde.')
+    }
+  })
+
+  autoUpdater.on('error', (err) => {
+    console.error('Error en el actualizador:', err)
   })
 
   // Cambiar la ruta a process.resourcesPath para cuando la aplicación está empaquetada

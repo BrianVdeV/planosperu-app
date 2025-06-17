@@ -85,7 +85,7 @@ coreui-free-react-admin-template
 1. Cambiar la version del PACKAGE.JSON
 2. npm run install
 3. npm run build
-4. export GH_TOKEN=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
+4. export GH_TOKEN=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
 5. npx electron-builder --publish always (DEBE DECIR 100% PARA PODER VER LA NUEVA VERSION)
 
 ---- PARA FLASK -----
