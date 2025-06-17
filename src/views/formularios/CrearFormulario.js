@@ -211,7 +211,6 @@ export default function RegistrarUnidadInmobiliaria() {
     valor_unitario: '',
     partida_registral: '',
     area_m2: '',
-    conyugue: '',
   })
 
   const [currentStep, setCurrentStep] = useState(1) // Controla en qué paso del formulario estamos
@@ -397,34 +396,26 @@ export default function RegistrarUnidadInmobiliaria() {
             {currentStep === 1 && (
               <div>
                 <strong>Formulario de OT:</strong>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '15px',
-                    marginTop: '15px',
-                  }}
-                >
-                  <div>
+                <CRow className="mb-3 g-3">
+                  <CCol xs={12} md={6}>
                     <CFormInput
                       name="ot"
-                      label="OT"
+                      label="OT (Orden de Trabajo)"
                       value={formDataOT.ot}
                       onChange={handleChangeOT}
                       required
                     />
-                  </div>
-                  <div>
+                  </CCol>
+                  <CCol xs={12} md={6}>
                     <CFormInput
                       name="siglas"
-                      label="Siglas"
+                      label="Siglas del trabajador"
                       value={formDataOT.siglas}
                       onChange={handleChangeOT}
                       required
                     />
-                  </div>
-                  <div>
+                  </CCol>
+                  <CCol xs={12} md={6}>
                     <CFormInput
                       name="area_m2"
                       label="Área en m²"
@@ -432,95 +423,84 @@ export default function RegistrarUnidadInmobiliaria() {
                       onChange={handleChangeOT}
                       required
                     />
-                  </div>
+                  </CCol>
 
-                  <div>
+                  <CCol xs={12} md={6}>
                     <CFormInput
                       name="partida_registral"
-                      label="Partida Registral"
+                      label="N° Partida Registral"
                       value={formDataOT.partida_registral}
                       onChange={handleChangeOT}
                       required
                     />
-                  </div>
-
-                  <div>
+                  </CCol>
+                  <CCol xs={12} md={6}>
+                    <CFormLabel htmlFor="exampleFormControlInput1">
+                      Valor Unitario{' '}
+                      <a
+                        href="https://limacap.org/valores-unitarios/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Ver cuadro de valores unitarios
+                      </a>
+                    </CFormLabel>
                     <CFormInput
                       name="valor_unitario"
-                      label="Valor Unitario"
                       value={formDataOT.valor_unitario}
                       onChange={handleChangeOT}
                       required
                     />
-                  </div>
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <hr />{' '}
+                  <CFormLabel htmlFor="numPropietarios" className="col-sm-3 col-form-label">
+                    Cantidad de Propietarios
+                  </CFormLabel>{' '}
+                  <CCol sm={3}>
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={cantidadPropietarios}
+                      onChange={(e) => {
+                        const nuevaCantidad = parseInt(e.target.value) || 1
+                        setCantidadPropietarios(nuevaCantidad)
 
-                  <hr style={{ margin: '30px 0' }} />
-                  <strong>Cantidad de Propietarios:</strong>
-                  <input
-                    type="number"
-                    min="1"
-                    value={cantidadPropietarios}
-                    onChange={(e) => {
-                      const nuevaCantidad = parseInt(e.target.value) || 1
-                      setCantidadPropietarios(nuevaCantidad)
-
-                      setPropietarios((prev) => {
-                        const copia = [...prev]
-                        while (copia.length < nuevaCantidad) {
-                          copia.push({
-                            nombres: '',
-                            apellidos: '',
-                            dni: '',
-                            estado_civil: '',
-                            conyugue: '',
-                            direccion: '',
-                          })
-                        }
-                        return copia.slice(0, nuevaCantidad)
-                      })
-                    }}
-                    style={{
-                      padding: '10px',
-                      width: '100%',
-                      borderRadius: '5px',
-                      border: '1px solid #ccc',
-                      marginTop: '10px',
-                      marginBottom: '20px',
-                    }}
-                  />
-
-                  {propietarios.map((propietario, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        marginBottom: '30px',
-                        border: '1px solid #ccc',
-                        padding: '15px',
-                        borderRadius: '10px',
+                        setPropietarios((prev) => {
+                          const copia = [...prev]
+                          while (copia.length < nuevaCantidad) {
+                            copia.push({
+                              nombres: '',
+                              apellidos: '',
+                              dni: '',
+                              estado_civil: '',
+                              direccion: '',
+                              conyugue: '',
+                            })
+                          }
+                          return copia.slice(0, nuevaCantidad)
+                        })
                       }}
-                    >
+                      style={{
+                        padding: '10px',
+                        width: '100%',
+                        borderRadius: '5px',
+                        border: '1px solid #ccc',
+                        marginTop: '10px',
+                        marginBottom: '20px',
+                      }}
+                    />
+                  </CCol>
+                </CRow>
+
+                {propietarios.map((propietario, index) => (
+                  <CCard key={index} style={{ marginBottom: '20px' }}>
+                    <CCardBody>
                       <strong>Propietario {index + 1}</strong>
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: '15px',
-                          marginTop: '15px',
-                        }}
-                      >
-                        <div>
-                          <CFormInput
-                            label="Nombres"
-                            value={propietario.nombres}
-                            onChange={(e) => {
-                              const nuevos = [...propietarios]
-                              nuevos[index].nombres = e.target.value
-                              setPropietarios(nuevos)
-                            }}
-                            required
-                          />
-                        </div>
-                        <div>
+                      <CForm className="row g-3">
+                        <CCol md={4}>
                           <CFormInput
                             label="Apellidos"
                             value={propietario.apellidos}
@@ -531,8 +511,20 @@ export default function RegistrarUnidadInmobiliaria() {
                             }}
                             required
                           />
-                        </div>
-                        <div>
+                        </CCol>
+                        <CCol md={4}>
+                          <CFormInput
+                            label="Nombres"
+                            value={propietario.nombres}
+                            onChange={(e) => {
+                              const nuevos = [...propietarios]
+                              nuevos[index].nombres = e.target.value
+                              setPropietarios(nuevos)
+                            }}
+                            required
+                          />
+                        </CCol>
+                        <CCol md={4}>
                           <CFormInput
                             label="DNI"
                             value={propietario.dni}
@@ -543,8 +535,21 @@ export default function RegistrarUnidadInmobiliaria() {
                             }}
                             required
                           />
-                        </div>
-                        <div>
+                        </CCol>
+
+                        <CCol md={4}>
+                          <CFormInput
+                            label="Dirección"
+                            value={propietario.direccion}
+                            onChange={(e) => {
+                              const nuevos = [...propietarios]
+                              nuevos[index].direccion = e.target.value
+                              setPropietarios(nuevos)
+                            }}
+                            required
+                          />
+                        </CCol>
+                        <CCol md={4}>
                           <CFormSelect
                             label="Estado Civil"
                             value={propietario.estado_civil}
@@ -562,10 +567,10 @@ export default function RegistrarUnidadInmobiliaria() {
                             <option value="divorciado">Divorciado</option>
                             <option value="separado">Separado Jurídicamente</option>
                           </CFormSelect>
-                        </div>
-                        <div>
+                        </CCol>
+                        <CCol md={4}>
                           <CFormInput
-                            label="Conyugue"
+                            label="Conyugue (de ser el caso)"
                             value={propietario.conyugue}
                             onChange={(e) => {
                               const nuevos = [...propietarios]
@@ -574,23 +579,11 @@ export default function RegistrarUnidadInmobiliaria() {
                             }}
                             required
                           />
-                        </div>
-                        <div>
-                          <CFormInput
-                            label="Dirección"
-                            value={propietario.direccion}
-                            onChange={(e) => {
-                              const nuevos = [...propietarios]
-                              nuevos[index].direccion = e.target.value
-                              setPropietarios(nuevos)
-                            }}
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        </CCol>
+                      </CForm>
+                    </CCardBody>
+                  </CCard>
+                ))}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
                   <CButton color="primary" onClick={() => setCurrentStep(2)}>
@@ -609,7 +602,7 @@ export default function RegistrarUnidadInmobiliaria() {
                       {/* Input para preguntar cuántos pisos tiene el inmueble */}
                       <CFormInput
                         type="number"
-                        label="¿Cuántos pisos tiene el inmueble?"
+                        label="¿Cuántos pisos tiene el inmueble? ¿Tiene Azotea?"
                         min={1}
                         value={numPisos}
                         onChange={(e) => setNumPisos(parseInt(e.target.value) || 1)}
