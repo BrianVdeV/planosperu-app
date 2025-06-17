@@ -316,6 +316,7 @@ def crear_cotizacion_jpg():
 
 @app.route('/crear-cotizacion', methods=['POST'])
 def crear_cotizacion():
+    """Crear cotización en Excel y devolverla como archivo adjunto"""
     try:
         # Obtener los datos recibidos en el JSON
         data = request.json
@@ -347,7 +348,7 @@ def crear_cotizacion():
         hoja = libro.sheets[0]
 
         # Limitar el tamaño de los detalles
-        limites_detalles = [15, 60]
+        limites_detalles = [15, 100]
         partes = []
         texto_restante = detalles.strip()
 
@@ -444,18 +445,10 @@ def crear_cotizacion():
 
 @app.route('/formulario-persona-natural', methods=['POST'])
 def formulario_persona_natural():
+    """Formulario SUNARP"""
     try:
-        # Obtener los datos del JSON recibido
         data = request.json
-
-        # Imprimir todo el JSON recibido para ver los datos completos
-        print("Datos recibidos:", data)
-
-        # Acceder al objeto 'ot' para obtener los datos principales
         ot_data = data.get('ot', {})
-
-        # Imprimir los datos del objeto 'ot'
-        print("Datos de OT:", ot_data)
 
         # Verificar si los datos de 'ot' están presentes
         if not ot_data:
@@ -469,10 +462,10 @@ def formulario_persona_natural():
 
         # Inicializar la aplicación de Excel
         app_excel = xw.App(visible=False)
-        libro = app_excel.books.open(ruta_formulario)
-        hoja = libro.sheets[0]  # Hoja principal
-        hoja_formulario = libro.sheets['FORMULARIO']  # Hoja de formulario
-        hoja_anexo1 = libro.sheets['Anexo 1']
+        wb = app_excel.books.open(ruta_formulario)
+        datos = wb.sheets[0]  # Hoja principal
+        hoja_formulario = wb.sheets['FORMULARIO']  # Hoja de formulario
+        hoja_anexo1 = wb.sheets['Anexo 1']
         propietarios = data.get('propietarios', [])
         primer_propietario = propietarios[0]
         hoja_anexo1.range('B9').value = primer_propietario.get('apellidos', '')
@@ -502,16 +495,16 @@ def formulario_persona_natural():
                 shapes[estado1]).TextFrame.Characters().Text = "X"
 
         # Llenar los campos básicos del formulario con los datos de 'ot'
-        hoja.range('D1').value = ot_data.get('ot', '')
-        hoja.range('D2').value = ot_data.get('siglas', '')
-        hoja.range('D5').value = primer_propietario.get('apellidos', '')
-        hoja.range('D6').value = primer_propietario.get('nombres', '')
-        hoja.range('D7').value = primer_propietario.get('dni', '')
-        hoja.range('D8').value = primer_propietario.get('direccion', '')
-        hoja.range('D10').value = primer_propietario.get('conyugue', '')
-        hoja.range('D11').value = ot_data.get('area_m2', '')
-        hoja.range('D12').value = ot_data.get('partida_registral', '')
-        hoja.range('D13').value = ot_data.get('valor_unitario', '')
+        datos.range('B1').value = ot_data.get('ot', '')
+        datos.range('B2').value = ot_data.get('siglas', '')
+        datos.range('A10').value = primer_propietario.get('apellidos', '')
+        datos.range('B10').value = primer_propietario.get('nombres', '')
+        datos.range('B11').value = primer_propietario.get('dni', '')
+        datos.range('B12').value = primer_propietario.get('direccion', '')
+        datos.range('B14').value = primer_propietario.get('conyugue', '')
+        datos.range('I15').value = ot_data.get('area_m2', '')
+        datos.range('I16').value = ot_data.get('partida_registral', '')
+        datos.range('I13').value = ot_data.get('valor_unitario', '')
         areas_por_nivel = {'sotano': {'ocupada': 0, 'techada': 0, 'libre': 0},
                            'semisotano': {'ocupada': 0, 'techada': 0, 'libre': 0},
                            '1': {'ocupada': 0, 'techada': 0, 'libre': 0},
@@ -1208,8 +1201,8 @@ def formulario_persona_natural():
         nombre_temporal = f"Formulario_Persona_Natural_{uuid.uuid4().hex}.xlsm"
         ruta_temporal = os.path.join(tempfile.gettempdir(), nombre_temporal)
 
-        libro.save(ruta_temporal)
-        libro.close()
+        wb.save(ruta_temporal)
+        wb.close()
         app_excel.quit()
 
         # Enviar el archivo al frontend para su descarga
