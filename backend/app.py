@@ -11,6 +11,7 @@ from flask_cors import CORS
 from flask import Flask, request, send_file
 import xlwings as xw
 from pdf2image import convert_from_path
+import fitz
 import requests  # En lugar de node-fetch
 
 app = Flask(__name__)
@@ -89,7 +90,7 @@ def crear_cotizacion_pdf():
         fechas = data.get('fechas', [])
 
         # Verificar si el archivo de plantilla existe con el nombre del código
-        ruta_original = obtener_ruta_absoluta(f'{codigo}.xlsx')
+        ruta_original = get_resource_path(f'docs/{codigo}.xlsx')
         if not os.path.exists(ruta_original):
             return f'El archivo con el código "{codigo}" no se encuentra', 400
 
@@ -220,7 +221,7 @@ def crear_cotizacion_jpg():
         fechas = data.get('fechas', [])
 
         # Verificar plantilla
-        ruta_original = obtener_ruta_absoluta(f'{codigo}.xlsx')
+        ruta_original = get_resource_path(f'docs/{codigo}.xlsx')
         if not os.path.exists(ruta_original):
             return f'El archivo con el código "{codigo}" no se encuentra', 400
 
@@ -303,9 +304,13 @@ def crear_cotizacion_jpg():
         app_excel.quit()
 
         # Convertir PDF a imagen
-        imagenes = convert_from_path(ruta_pdf, dpi=300)
+        doc = fitz.open(ruta_pdf)
+        pagina = doc.load_page(0)  # Cargar la primera página (índice 0)
+        # Puedes ajustar el DPI si deseas más calidad
+        pixmap = pagina.get_pixmap(dpi=300)
         ruta_jpg = ruta_pdf.replace(".pdf", ".jpg")
-        imagenes[0].save(ruta_jpg, "JPEG")
+        pixmap.save(ruta_jpg)
+        doc.close()
 
         return send_file(
             ruta_jpg,
