@@ -282,12 +282,7 @@ def crear_cotizacion_jpg():
         mes_dia = hoy.strftime("%m%d")
         abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
 
-        def limpiar(texto):
-            return ''.join(c for c in texto if c.isalnum() or c in (' ', '-', '_')).replace(' ', '')
-
-        cliente_limpio = limpiar(cliente or 'Cliente')
-        ubicacion_limpia = limpiar(ubicacion or 'Ubicacion')
-        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}"
+        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente}-{ubicacion}.xlsx"
 
         hoja.range(
             'E19').value = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}"
@@ -416,14 +411,7 @@ def crear_cotizacion():
         mes_dia = hoy.strftime("%m%d")
         abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
 
-        # Función para limpiar el texto de caracteres especiales
-        def limpiar(texto):
-            return ''.join(c for c in texto if c.isalnum() or c in (' ', '-', '_')).replace(' ', '')
-
-        cliente_limpio = limpiar(cliente or 'Cliente')
-        ubicacion_limpia = limpiar(ubicacion or 'Ubicacion')
-
-        nombre_archivo_excel = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}.xlsx"
+        nombre_archivo_excel = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente}-{ubicacion}.xlsx"
         hoja.range(
             'E19').value = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}"
         print(f"Nombre del archivo generado: {nombre_archivo_excel}")
