@@ -102,7 +102,7 @@ def crear_cotizacion_pdf():
         hoja = libro.sheets[0]
 
         # Limitar el tamaño de los detalles
-        limites_detalles = [15, 60]
+        limites_detalles = [15, 100]
         partes = []
         texto_restante = detalles.strip()
 
@@ -231,7 +231,7 @@ def crear_cotizacion_jpg():
         hoja = libro.sheets[0]
 
         # Procesar los detalles
-        limites_detalles = [15, 60]
+        limites_detalles = [15, 100]
         partes = []
         texto_restante = detalles.strip()
 
@@ -324,7 +324,6 @@ def crear_cotizacion_jpg():
 def crear_cotizacion():
     """Crear cotización en Excel y devolverla como archivo adjunto"""
     try:
-        # Obtener los datos recibidos en el JSON
         data = request.json
         print("JSON recibido:", data)
 
