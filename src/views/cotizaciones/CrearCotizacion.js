@@ -36,7 +36,26 @@ export default function CrearCotizacion() {
       if (cotizacionSeleccionada) {
         switch (cotizacionSeleccionada.tipo) {
           case 'Planos y Documentos':
-            setDetalles('Se elaborará planos y documentos para , según normativa vigente.')
+            switch (cotizacionSeleccionada.codigo) {
+              case 'DEC-SUB':
+                setDetalles(
+                  'Se elaborará planos y documentos para saneamineto legal de un inmueble () sin cargas tecnicas, segun normativas vigentes de los Registros Públicos.',
+                )
+                break
+              case 'IND':
+                setDetalles(
+                  'Se elaborará planos y documentos para saneamineto legal de un inmueble () sin cargas tecnicas, segun normativas vigentes de los Registros Públicos.',
+                )
+                break
+              case 'BUS-CAT':
+                setDetalles(
+                  'Se elaborará planos y documentos de un inmueble georeferenciados con coordenadas UTM, segun normativas vigentes de los Registros Públicos.',
+                )
+                break
+              default:
+                setDetalles('Se elaborará documentos para , según normativa vigente.')
+                break
+            }
             break
           case 'Documentos':
             setDetalles('Se elaborará documentos para , según normativa vigente.')
