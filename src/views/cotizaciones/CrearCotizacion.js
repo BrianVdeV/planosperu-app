@@ -53,7 +53,7 @@ export default function CrearCotizacion() {
                 )
                 break
               default:
-                setDetalles('Se elaborará documentos para , según normativa vigente.')
+                setDetalles('Se elaborará planos y documentos para , según normativa vigente.')
                 break
             }
             break
