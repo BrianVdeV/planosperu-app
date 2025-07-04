@@ -73,16 +73,11 @@ for file_name in file_names:
     try:
         wb = app.books.open(file_path)
         sheet = wb.sheets[0]  # Usa la primera hoja
-        texto_original = 'Ing. Santillan Quiroz Julio  Nº CIP:56827  CIV: 022023VCZRIX'
-        texto_nuevo = 'Ing. Aguirre Alanya Luis Antonio CIP: 323997 CIV: 022178VCZRIX'
 
-        # Recorrer de B63 a B67
-        for fila in range(63, 70):  # 68 no se incluye
-            celda = f'B{fila}'
-            valor = sheet.range(celda).value
-            if valor == texto_original:
-                sheet.range(celda).value = texto_nuevo
-                print(f"✅ Reemplazado en {celda}: {valor}")
+        # Cambiar el valor de la celda A14 a "Pisos:"
+        sheet.range('A14').value = "Pisos:"
+        print(f"✅ A14 actualizado en {file_name}")
+
         wb.save()
         wb.close()
     except Exception as e:
