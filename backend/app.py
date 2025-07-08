@@ -7,10 +7,9 @@ import sys
 import uuid
 import textwrap
 from collections import defaultdict
-from flask_cors import CORS
 from flask import Flask, request, send_file
+from flask_cors import CORS
 import xlwings as xw
-from pdf2image import convert_from_path
 import fitz
 import requests  # En lugar de node-fetch
 
@@ -37,6 +36,7 @@ TOKEN = 'apis-token-14662.Nmuzr6WVqKvh3GRMFOxpvNhO3wZxzxlA'  # Usa el tuyo real
 
 @app.route('/api/dni/<numero>', methods=['GET'])
 def consultar_dni(numero):
+    """Consulta el DNI usando la API de RENIEC"""
     try:
         headers = {
             'Authorization': f'Bearer {TOKEN}',
@@ -46,7 +46,7 @@ def consultar_dni(numero):
             f'https://api.apis.net.pe/v2/reniec/dni?numero={numero}', headers=headers)
         response.raise_for_status()
         return response.json()
-    except Exception as e:
+    except requests.exceptions.RequestException:
         print(traceback.format_exc())
         return {'error': 'Error en la consulta al API del DNI'}, 500
 
@@ -55,6 +55,7 @@ def consultar_dni(numero):
 
 @app.route('/api/ruc/<numero>', methods=['GET'])
 def consultar_ruc(numero):
+    """Consulta el RUC usando la API de SUNAT"""
     try:
         headers = {
             'Authorization': f'Bearer {TOKEN}',
@@ -64,7 +65,7 @@ def consultar_ruc(numero):
             f'https://api.apis.net.pe/v2/sunat/ruc/full?numero={numero}', headers=headers)
         response.raise_for_status()
         return response.json()
-    except Exception as e:
+    except requests.exceptions.RequestException:
         print(traceback.format_exc())
         return {'error': 'Error en la consulta al API del RUC'}, 500
 
@@ -72,129 +73,33 @@ def consultar_ruc(numero):
 @app.route('/crear-cotizacion-pdf', methods=['POST'])
 def crear_cotizacion_pdf():
     try:
-        # Obtener los datos recibidos en el JSON
         data = request.json
-        print("JSON recibido:", data)
+        ruta_xlsx = cotizaciones(data)  # Genera el Excel temporal
 
-        codigo = data.get('codigo')
-        nombre = data.get('usuario')
-        detalles = data.get('detalles', '')
-        cliente = data.get('cliente')
-        ubicacion = data.get('ubicacion')
-        telefono = data.get('telefono')
-        dni = data.get('dni')
-        observaciones = data.get('observaciones') or ' '
-        pisos = data.get('piso')
-        area = data.get('area')
-        cuotas = data.get('cuotas', [])
-        fechas = data.get('fechas', [])
-
-        # Verificar si el archivo de plantilla existe con el nombre del código
-        ruta_original = get_resource_path(f'docs/{codigo}.xlsx')
-        if not os.path.exists(ruta_original):
-            return f'El archivo con el código "{codigo}" no se encuentra', 400
-
-        # Iniciar Excel de forma oculta
+        # Convertir Excel a PDF
         app_excel = xw.App(visible=False)
-        libro = app_excel.books.open(ruta_original)
-
-        # Solo se trabaja con la primera hoja del archivo
+        libro = app_excel.books.open(ruta_xlsx)
         hoja = libro.sheets[0]
+        ruta_pdf = ruta_xlsx.replace(".xlsx", ".pdf")
+        hoja.to_pdf(ruta_pdf)
+        libro.close()
+        app_excel.quit()
 
-        # Limitar el tamaño de los detalles
-        limites_detalles = [15, 100]
-        partes = []
-        texto_restante = detalles.strip()
-
-        for limite in limites_detalles:
-            if len(texto_restante) <= limite:
-                partes.append(texto_restante)
-                texto_restante = ''
-            else:
-                corte = texto_restante[:limite]
-                espacio = corte.rfind(' ')
-                if espacio != -1:
-                    partes.append(texto_restante[:espacio].strip())
-                    texto_restante = texto_restante[espacio + 1:].strip()
-                else:
-                    partes.append(corte.strip())
-                    texto_restante = texto_restante[limite:].strip()
-        if texto_restante:
-            partes.append(texto_restante)
-
-        # Llenar las celdas de detalles
-        celdas_detalles = ['G11', 'B12', 'B13']
-        for i in range(min(3, len(partes))):
-            hoja.range(celdas_detalles[i]).value = partes[i]
-
-        # Rellenar los datos del cliente y la ubicación
-        hoja.range('B15').value = cliente
-        hoja.range('G15').value = ubicacion
-        hoja.range('G16').value = telefono
-        hoja.range('B17').value = dni
-        hoja.range('B14').value = pisos
-        hoja.range('D14').value = area
-
-        # Llenar observaciones
-        for i, linea in enumerate(observaciones.split('\n'), start=52):
-            if i > 54:
-                break
-            hoja.range(f'C{i}').value = linea
-
-        # Llenar cuotas
-        celdas_cuotas = ['C61', 'C62', 'C63', 'C64']
-        for i, monto in enumerate(cuotas):
-            if i < len(celdas_cuotas):
-                hoja.range(celdas_cuotas[i]).value = monto
-
-        # Llenar fechas
-        celdas_fechas = ['G61', 'G62', 'G63', 'G64']
-        for i, fecha in enumerate(fechas):
-            if i < len(celdas_fechas):
-                hoja.range(celdas_fechas[i]).value = fecha
-
-        # Crear nombre de archivo único
+        # Nombre de archivo para descargar
+        codigo = data.get('codigo', 'cotizacion')
+        nombre = data.get('usuario', 'usuario')
         hoy = datetime.now()
         anio = hoy.strftime("%Y")
         mes_dia = hoy.strftime("%m%d")
         abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
+        nombre_archivo_pdf = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}.pdf"
 
-        # Función para limpiar el texto de caracteres especiales
-        def limpiar(texto):
-            return ''.join(c for c in texto if c.isalnum() or c in (' ', '-', '_')).replace(' ', '')
-
-        cliente_limpio = limpiar(cliente or 'Cliente')
-        ubicacion_limpia = limpiar(ubicacion or 'Ubicacion')
-
-        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}"
-        hoja.range(
-            'E19').value = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}"
-        print(f"Nombre del archivo generado: {nombre_archivo}")
-
-        # Crear archivo temporal Excel
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
-            ruta_salida = temp_file.name
-
-        # Guardar el archivo generado como Excel
-        libro.save(ruta_salida)
-
-        # Exportar a PDF
-        pdf_temp_path = ruta_salida.replace(".xlsx", ".pdf")
-        hoja.to_pdf(pdf_temp_path)  # Exporta a PDF usando xlwings
-
-        # Cerrar el libro y la aplicación Excel
-        libro.close()
-        app_excel.quit()
-
-        # Asegurarse de que el archivo PDF se pase correctamente
         return send_file(
-            pdf_temp_path,
+            ruta_pdf,
             as_attachment=True,
-            # Usar el nombre correcto para el archivo PDF
-            download_name=f"{nombre_archivo}.pdf",
+            download_name=nombre_archivo_pdf,
             mimetype='application/pdf'
         )
-
     except Exception as e:
         print(traceback.format_exc())
         return f'Ocurrió un error: {str(e)}', 500
@@ -203,119 +108,44 @@ def crear_cotizacion_pdf():
 @app.route('/crear-cotizacion-jpg', methods=['POST'])
 def crear_cotizacion_jpg():
     try:
-        # Obtener los datos recibidos
+        # 1. Generar el Excel
         data = request.json
-        print("JSON recibido:", data)
+        ruta_xlsx = cotizaciones(data)
 
-        codigo = data.get('codigo')
-        nombre = data.get('usuario')
-        detalles = data.get('detalles', '')
-        cliente = data.get('cliente')
-        ubicacion = data.get('ubicacion')
-        telefono = data.get('telefono')
-        dni = data.get('dni')
-        observaciones = data.get('observaciones') or ' '
-        pisos = data.get('piso')
-        area = data.get('area')
-        cuotas = data.get('cuotas', [])
-        fechas = data.get('fechas', [])
-
-        # Verificar plantilla
-        ruta_original = get_resource_path(f'docs/{codigo}.xlsx')
-        if not os.path.exists(ruta_original):
-            return f'El archivo con el código "{codigo}" no se encuentra', 400
-
-        # Iniciar Excel de forma oculta
+        # 2. Convertir Excel a PDF
         app_excel = xw.App(visible=False)
-        libro = app_excel.books.open(ruta_original)
+        libro = app_excel.books.open(ruta_xlsx)
         hoja = libro.sheets[0]
-
-        # Procesar los detalles
-        limites_detalles = [15, 100]
-        partes = []
-        texto_restante = detalles.strip()
-
-        for limite in limites_detalles:
-            if len(texto_restante) <= limite:
-                partes.append(texto_restante)
-                texto_restante = ''
-            else:
-                corte = texto_restante[:limite]
-                espacio = corte.rfind(' ')
-                if espacio != -1:
-                    partes.append(texto_restante[:espacio].strip())
-                    texto_restante = texto_restante[espacio + 1:].strip()
-                else:
-                    partes.append(corte.strip())
-                    texto_restante = texto_restante[limite:].strip()
-        if texto_restante:
-            partes.append(texto_restante)
-
-        celdas_detalles = ['G11', 'B12', 'B13']
-        for i in range(min(3, len(partes))):
-            hoja.range(celdas_detalles[i]).value = partes[i]
-
-        hoja.range('B15').value = cliente
-        hoja.range('G15').value = ubicacion
-        hoja.range('G16').value = telefono
-        hoja.range('B17').value = dni
-        hoja.range('B14').value = pisos
-        hoja.range('D14').value = area
-
-        for i, linea in enumerate(observaciones.split('\n'), start=52):
-            if i > 54:
-                break
-            hoja.range(f'C{i}').value = linea
-
-        celdas_cuotas = ['C61', 'C62', 'C63', 'C64']
-        for i, monto in enumerate(cuotas):
-            if i < len(celdas_cuotas):
-                hoja.range(celdas_cuotas[i]).value = monto
-
-        celdas_fechas = ['G61', 'G62', 'G63', 'G64']
-        for i, fecha in enumerate(fechas):
-            if i < len(celdas_fechas):
-                hoja.range(celdas_fechas[i]).value = fecha
-
-        hoy = datetime.now()
-        anio = hoy.strftime("%Y")
-        mes_dia = hoy.strftime("%m%d")
-        abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
-
-        nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente}-{ubicacion}.xlsx"
-
-        hoja.range(
-            'E19').value = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}"
-
-        # Guardar temporalmente como Excel y luego como PDF
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_xlsx:
-            ruta_excel = temp_xlsx.name
-        libro.save(ruta_excel)
-
-        ruta_pdf = ruta_excel.replace(".xlsx", ".pdf")
+        ruta_pdf = ruta_xlsx.replace(".xlsx", ".pdf")
         hoja.to_pdf(ruta_pdf)
-
         libro.close()
         app_excel.quit()
 
-        # Convertir PDF a imagen
+        # 3. Convertir PDF a JPG
         doc = fitz.open(ruta_pdf)
-        pagina = doc.load_page(0)  # Cargar la primera página (índice 0)
-        # Puedes ajustar el DPI si deseas más calidad
+        pagina = doc.load_page(0)  # Primera página
         pixmap = pagina.get_pixmap(dpi=300)
         ruta_jpg = ruta_pdf.replace(".pdf", ".jpg")
         pixmap.save(ruta_jpg)
         doc.close()
 
+        # 4. Enviar el JPG
+        codigo = data.get('codigo', 'cotizacion')
+        nombre = data.get('usuario', 'usuario')
+        hoy = datetime.now()
+        anio = hoy.strftime("%Y")
+        mes_dia = hoy.strftime("%m%d")
+        abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
+        file_name = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}.jpg"
+
         return send_file(
             ruta_jpg,
             as_attachment=True,
-            download_name=f"{nombre_archivo}.jpg",
+            download_name=file_name,
             mimetype='image/jpeg'
         )
 
     except Exception as e:
-        import traceback
         print(traceback.format_exc())
         return f"Error al generar la cotización en JPG: {str(e)}", 500
 
@@ -325,120 +155,135 @@ def crear_cotizacion():
     """Crear cotización en Excel y devolverla como archivo adjunto"""
     try:
         data = request.json
-        print("JSON recibido:", data)
+        # cotizaciones retorna la ruta del archivo generado
+        ruta_xlsx = cotizaciones(data)
 
-        codigo = data.get('codigo')
-        nombre = data.get('usuario')
-        detalles = data.get('detalles', '')
-        cliente = data.get('cliente')
-        ubicacion = data.get('ubicacion')
-        telefono = data.get('telefono')
-        dni = data.get('dni')
-        observaciones = data.get('observaciones') or ' '
-        pisos = data.get('piso')
-        area = data.get('area')
-        cuotas = data.get('cuotas', [])
-        fechas = data.get('fechas', [])
-
-        # Verificar si el archivo de plantilla existe con el nombre del código
-        ruta_original = get_resource_path(f'docs/{codigo}.xlsx')
-        if not os.path.exists(ruta_original):
-            return f'El archivo con el código "{codigo}" no se encuentra', 400
-
-        # Iniciar Excel de forma oculta
-        app_excel = xw.App(visible=False)
-        libro = app_excel.books.open(ruta_original)
-
-        # Solo se trabaja con la primera hoja del archivo
-        hoja = libro.sheets[0]
-
-        # Limitar el tamaño de los detalles
-        limites_detalles = [15, 100]
-        partes = []
-        texto_restante = detalles.strip()
-
-        for limite in limites_detalles:
-            if len(texto_restante) <= limite:
-                partes.append(texto_restante)
-                texto_restante = ''
-            else:
-                corte = texto_restante[:limite]
-                espacio = corte.rfind(' ')
-                if espacio != -1:
-                    partes.append(texto_restante[:espacio].strip())
-                    texto_restante = texto_restante[espacio + 1:].strip()
-                else:
-                    partes.append(corte.strip())
-                    texto_restante = texto_restante[limite:].strip()
-        if texto_restante:
-            partes.append(texto_restante)
-
-        # Llenar las celdas de detalles
-        celdas_detalles = ['G11', 'B12', 'B13']
-        for i in range(min(3, len(partes))):
-            hoja.range(celdas_detalles[i]).value = partes[i]
-
-        # Rellenar los datos del cliente y la ubicación
-        hoja.range('B15').value = cliente
-        hoja.range('G15').value = ubicacion
-        hoja.range('G16').value = telefono
-        hoja.range('B17').value = dni
-        hoja.range('B14').value = pisos
-        hoja.range('D14').value = area
-
-        # Llenar observaciones
-        for i, linea in enumerate(observaciones.split('\n'), start=52):
-            if i > 54:
-                break
-            hoja.range(f'C{i}').value = linea
-
-        # Llenar cuotas
-        celdas_cuotas = ['C61', 'C62', 'C63', 'C64']
-        for i, monto in enumerate(cuotas):
-            if i < len(celdas_cuotas):
-                hoja.range(celdas_cuotas[i]).value = monto
-
-        # Llenar fechas
-        celdas_fechas = ['G61', 'G62', 'G63', 'G64']
-        for i, fecha in enumerate(fechas):
-            if i < len(celdas_fechas):
-                hoja.range(celdas_fechas[i]).value = fecha
-
-        # Crear nombre de archivo único
+        # Nombre de archivo para descargar
+        codigo = data.get('codigo', 'cotizacion')
+        nombre = data.get('usuario', 'usuario')
         hoy = datetime.now()
         anio = hoy.strftime("%Y")
         mes_dia = hoy.strftime("%m%d")
         abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
-
-        nombre_archivo_excel = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente}-{ubicacion}.xlsx"
-        hoja.range(
-            'E19').value = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}"
-        print(f"Nombre del archivo generado: {nombre_archivo_excel}")
-
-        # Crear archivo temporal Excel
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
-            ruta_salida = temp_file.name
-
-        # Guardar el archivo generado como Excel
-        libro.save(ruta_salida)
-
-        # Cerrar el libro y la aplicación Excel
-        libro.close()
-        app_excel.quit()
-
-        # Asegurarse de que el archivo Excel se pase correctamente
+        nombre_archivo_excel = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}.xlsx"
         return send_file(
-            ruta_salida,  # Pasar la ruta del archivo Excel generado
+            ruta_xlsx,
             as_attachment=True,
-            # Usar el nombre correcto para el archivo Excel
             download_name=nombre_archivo_excel,
-            # MIME tipo para archivos Excel
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
     except Exception as e:
-        import traceback
         print(traceback.format_exc())
         return f'Error al procesar el formulario: {str(e)}', 500
+
+
+def cotizaciones(data):
+    """
+    Edita el xlsx de cotizaciones a partir de un JSON.
+    Recibe un diccionario con los datos y retorna la ruta del archivo Excel generado.
+    """
+
+    codigo = data.get('codigo')
+    nombre = data.get('usuario')
+    detalles = data.get('detalles', '')
+    cliente = data.get('cliente')
+    ubicacion = data.get('ubicacion')
+    telefono = data.get('telefono')
+    dni = data.get('dni')
+    observaciones = data.get('observaciones') or ' '
+    pisos = data.get('piso')
+    area = data.get('area')
+    cuotas = data.get('cuotas', [])
+    fechas = data.get('fechas', [])
+
+    # Verificar si el archivo de plantilla existe con el nombre del código
+    ruta_original = get_resource_path(f'docs/{codigo}.xlsx')
+    if not os.path.exists(ruta_original):
+        raise FileNotFoundError(
+            f'El archivo con el código "{codigo}" no se encuentra')
+
+    # Iniciar Excel de forma oculta
+    app_excel = xw.App(visible=False)
+    wb = app_excel.books.open(ruta_original)
+    hoja = wb.sheets[0]
+
+    # Limitar el tamaño de los detalles
+    limites_detalles = [15, 100]
+    partes = []
+    texto_restante = detalles.strip()
+
+    for limite in limites_detalles:
+        if len(texto_restante) <= limite:
+            partes.append(texto_restante)
+            texto_restante = ''
+        else:
+            corte = texto_restante[:limite]
+            espacio = corte.rfind(' ')
+            if espacio != -1:
+                partes.append(texto_restante[:espacio].strip())
+                texto_restante = texto_restante[espacio + 1:].strip()
+            else:
+                partes.append(corte.strip())
+                texto_restante = texto_restante[limite:].strip()
+    if texto_restante:
+        partes.append(texto_restante)
+
+    # Llenar las celdas de detalles
+    celdas_detalles = ['G11', 'B12', 'B13']
+    for i in range(min(3, len(partes))):
+        hoja.range(celdas_detalles[i]).value = partes[i]
+
+    # Rellenar los datos del cliente y la ubicación
+    hoja.range('B15').value = cliente
+    hoja.range('G15').value = ubicacion
+    hoja.range('G16').value = telefono
+    hoja.range('B17').value = dni
+    hoja.range('B14').value = pisos
+    hoja.range('D14').value = area
+
+    # Llenar observaciones
+    for i, linea in enumerate(observaciones.split('\n'), start=52):
+        if i > 54:
+            break
+        hoja.range(f'C{i}').value = linea
+
+    # Llenar cuotas
+    celdas_cuotas = ['C61', 'C62', 'C63', 'C64']
+    for i, monto in enumerate(cuotas):
+        if i < len(celdas_cuotas):
+            hoja.range(celdas_cuotas[i]).value = monto
+
+    # Llenar fechas
+    celdas_fechas = ['G61', 'G62', 'G63', 'G64']
+    for i, fecha in enumerate(fechas):
+        if i < len(celdas_fechas):
+            hoja.range(celdas_fechas[i]).value = fecha
+
+    # Crear nombre de archivo único
+    hoy = datetime.now()
+    anio = hoy.strftime("%Y")
+    mes_dia = hoy.strftime("%m%d")
+    abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
+
+    def limpiar(texto):
+        return ''.join(c for c in texto if c.isalnum() or c in (' ', '-', '_')).replace(' ', '')
+
+    cliente_limpio = limpiar(cliente or 'Cliente')
+    ubicacion_limpia = limpiar(ubicacion or 'Ubicacion')
+
+    nombre_archivo = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}-{cliente_limpio}-{ubicacion_limpia}.xlsx"
+    hoja.range(
+        'E19').value = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}"
+
+    # Crear archivo temporal Excel
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
+        ruta_salida = temp_file.name
+
+    wb.save(ruta_salida)
+    wb.close()
+    app_excel.quit()
+
+    return ruta_salida
 
 
 @app.route('/formulario-persona-natural', methods=['POST'])
