@@ -39,12 +39,12 @@ export default function CrearCotizacion() {
             switch (cotizacionSeleccionada.codigo) {
               case 'DEC-SUB':
                 setDetalles(
-                  'Se elaborará planos y documentos para saneamineto legal de un inmueble () sin cargas tecnicas, segun normativas vigentes de los Registros Públicos.',
+                  'Se elaborará planos y documentos para saneamiento legal de un inmueble () sin cargas tecnicas, segun normativas vigentes de los Registros Públicos.',
                 )
                 break
               case 'IND':
                 setDetalles(
-                  'Se elaborará planos y documentos para saneamineto legal de un inmueble () sin cargas tecnicas, segun normativas vigentes de los Registros Públicos.',
+                  'Se elaborará planos y documentos para saneamiento legal de un inmueble () sin cargas tecnicas, segun normativas vigentes de los Registros Públicos.',
                 )
                 break
               case 'BUS-CAT':

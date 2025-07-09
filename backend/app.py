@@ -7,14 +7,25 @@ import sys
 import uuid
 import textwrap
 from collections import defaultdict
-from flask import Flask, request, send_file
-from flask_cors import CORS
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 import xlwings as xw
 import fitz
 import requests  # En lugar de node-fetch
 
-app = Flask(__name__)
-CORS(app)
+HOST = "127.0.0.1"
+PORT = 5000
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_resource_path(relative_path):
@@ -34,7 +45,7 @@ TOKEN = 'apis-token-14662.Nmuzr6WVqKvh3GRMFOxpvNhO3wZxzxlA'  # Usa el tuyo real
 # Ruta para consultar DNI
 
 
-@app.route('/api/dni/<numero>', methods=['GET'])
+@app.get("/api/dni/{numero}")
 def consultar_dni(numero):
     """Consulta el DNI usando la API de RENIEC"""
     try:
@@ -70,10 +81,36 @@ def consultar_ruc(numero):
         return {'error': 'Error en la consulta al API del RUC'}, 500
 
 
-@app.route('/crear-cotizacion-pdf', methods=['POST'])
-def crear_cotizacion_pdf():
+@app.post("/crear-cotizacion")
+async def crear_cotizacion(request: Request):
+    """Crear cotización en Excel y devolverla como archivo adjunto"""
     try:
-        data = request.json
+        data = await request.json()
+        # cotizaciones retorna la ruta del archivo generado
+        ruta_xlsx = cotizaciones(data)
+
+        # Nombre de archivo para descargar
+        codigo = data.get('codigo', 'cotizacion')
+        nombre = data.get('usuario', 'usuario')
+        hoy = datetime.now()
+        anio = hoy.strftime("%Y")
+        mes_dia = hoy.strftime("%m%d")
+        abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
+        nombre_archivo_excel = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}.xlsx"
+        return FileResponse(
+            ruta_xlsx,
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            filename=nombre_archivo_excel
+        )
+    except Exception as e:
+        print(traceback.format_exc())
+        return f'Error al procesar el formulario: {str(e)}', 500
+
+
+@app.route('/crear-cotizacion-pdf', methods=['POST'])
+async def crear_cotizacion_pdf(request: Request):
+    try:
+        data = await request.json()
         ruta_xlsx = cotizaciones(data)  # Genera el Excel temporal
 
         # Convertir Excel a PDF
@@ -94,11 +131,10 @@ def crear_cotizacion_pdf():
         abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
         nombre_archivo_pdf = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}.pdf"
 
-        return send_file(
+        return FileResponse(
             ruta_pdf,
-            as_attachment=True,
-            download_name=nombre_archivo_pdf,
-            mimetype='application/pdf'
+            media_type='application/pdf',
+            filename=nombre_archivo_pdf
         )
     except Exception as e:
         print(traceback.format_exc())
@@ -106,10 +142,10 @@ def crear_cotizacion_pdf():
 
 
 @app.route('/crear-cotizacion-jpg', methods=['POST'])
-def crear_cotizacion_jpg():
+async def crear_cotizacion_jpg(request: Request):
     try:
         # 1. Generar el Excel
-        data = request.json
+        data = await request.json()
         ruta_xlsx = cotizaciones(data)
 
         # 2. Convertir Excel a PDF
@@ -138,43 +174,15 @@ def crear_cotizacion_jpg():
         abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
         file_name = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}.jpg"
 
-        return send_file(
+        return FileResponse(
             ruta_jpg,
-            as_attachment=True,
-            download_name=file_name,
-            mimetype='image/jpeg'
+            media_type='image/jpeg',
+            filename=file_name
         )
 
     except Exception as e:
         print(traceback.format_exc())
         return f"Error al generar la cotización en JPG: {str(e)}", 500
-
-
-@app.route('/crear-cotizacion', methods=['POST'])
-def crear_cotizacion():
-    """Crear cotización en Excel y devolverla como archivo adjunto"""
-    try:
-        data = request.json
-        # cotizaciones retorna la ruta del archivo generado
-        ruta_xlsx = cotizaciones(data)
-
-        # Nombre de archivo para descargar
-        codigo = data.get('codigo', 'cotizacion')
-        nombre = data.get('usuario', 'usuario')
-        hoy = datetime.now()
-        anio = hoy.strftime("%Y")
-        mes_dia = hoy.strftime("%m%d")
-        abreviado_usuario = (nombre[:3] if nombre else 'USR').upper()
-        nombre_archivo_excel = f"CZ-{anio}-{mes_dia}-{abreviado_usuario}-{codigo}.xlsx"
-        return send_file(
-            ruta_xlsx,
-            as_attachment=True,
-            download_name=nombre_archivo_excel,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-    except Exception as e:
-        print(traceback.format_exc())
-        return f'Error al procesar el formulario: {str(e)}', 500
 
 
 def cotizaciones(data):
@@ -1057,5 +1065,11 @@ def formulario_persona_natural():
         return f'Error al procesar el formulario: {str(e)}', 500
 
 
-if __name__ == '__main__':
-    app.run(port=5000)
+if __name__ == "__main__":
+    import asyncio
+    import uvicorn
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    loop.run_until_complete(uvicorn.run(app, host=HOST, port=PORT))
