@@ -38,8 +38,9 @@ const Validation = React.lazy(() => import('./views/forms/validation/Validation'
 
 const Charts = React.lazy(() => import('./views/charts/Charts'))
 
-const CotizacionesPage = React.lazy(() => import('./views/cotizaciones/CotizacionesPage'));
-const FormularioPage = React.lazy(() => import('./views/formularios/FormularioPage'));
+const CotizacionesPage = React.lazy(() => import('./views/cotizaciones/CotizacionesPage'))
+const FormularioPage = React.lazy(() => import('./views/formularios/FormularioPage'))
+const Asistencias = React.lazy(() => import('./views/asistencias/Asistencias'))
 // Icons
 const CoreUIIcons = React.lazy(() => import('./views/icons/coreui-icons/CoreUIIcons'))
 const Flags = React.lazy(() => import('./views/icons/flags/Flags'))
@@ -101,6 +102,7 @@ const routes = [
   { path: '/widgets', name: 'Widgets', element: Widgets },
   { path: '/cotizaciones', name: 'Cotizaciones', element: CotizacionesPage },
   { path: '/formulario', name: 'Formulario Persona Natural', element: FormularioPage },
+  { path: '/asistencias', name: 'Asistencias', element: Asistencias },
 ]
 
 export default routes

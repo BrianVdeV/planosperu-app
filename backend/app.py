@@ -2,17 +2,21 @@
 import os
 import tempfile
 import traceback
-from datetime import datetime
+from datetime import datetime, date
 import sys
 import uuid
 import textwrap
 from collections import defaultdict
+import calendar
+import json
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPDigest
 import xlwings as xw
 import fitz
 import requests  # En lugar de node-fetch
+from requests.auth import HTTPDigestAuth
 
 HOST = "127.0.0.1"
 PORT = 5000
@@ -1057,12 +1061,167 @@ def formulario_persona_natural():
         app_excel.quit()
 
         # Enviar el archivo al frontend para su descarga
-        return send_file(ruta_temporal, as_attachment=True, download_name="Formulario_Persona_Natural.xlsm")
+        return FileResponse(ruta_temporal, as_attachment=True, download_name="Formulario_Persona_Natural.xlsm")
 
     except Exception as e:
         import traceback
         print(traceback.format_exc())
         return f'Error al procesar el formulario: {str(e)}', 500
+
+
+def get_terminal_data(nombre, comienzo, fin):
+    url = "http://192.168.18.101/ISAPI/AccessControl/AcsEvent?format=json"
+    headers = {'Content-Type': 'application/json'}
+    auth = HTTPDigestAuth('admin', 'Eunacin0@27')
+
+    search_result_position = 0
+    all_events = []
+
+    while True:
+        payload = json.dumps({
+            "AcsEventCond": {
+                "searchID": "1",
+                "searchResultPosition": search_result_position,
+                "maxResults": 30,  # o 1000, pero la terminal puede tener límites
+                "major": 5,
+                "minor": 0,
+                "name": nombre,
+                "startTime": comienzo,
+                "endTime": fin
+            }
+        })
+
+        response = requests.post(url, headers=headers,
+                                 data=payload, auth=auth, timeout=10)
+
+        if response.status_code != 200:
+            print(f"Error en API: {response.status_code} - {response.text}")
+            break
+
+        data = response.json()
+        acs_event = data.get("AcsEvent", {})
+        info_list = acs_event.get("InfoList", [])
+
+        for evento in info_list:
+            time_iso = evento.get("time")
+            if time_iso:
+                dt = datetime.fromisoformat(time_iso)
+                evento["time_formatted"] = dt.strftime("%H:%M")
+
+        all_events.extend(info_list)
+
+        total_matches = int(acs_event.get("totalMatches", 0))
+        num_of_matches = int(acs_event.get("numOfMatches", 0))
+
+        search_result_position += num_of_matches
+
+        # Si ya alcanzaste el total, sales del bucle
+        if search_result_position >= total_matches:
+            break
+
+    return all_events
+
+
+def agrupar_eventos_por_dia(eventos, año, mes):
+    # Construye dict: fecha → lista de horas
+    dias = defaultdict(list)
+
+    for evento in eventos:
+        time_iso = evento.get("time")
+        if time_iso:
+            dt = datetime.fromisoformat(time_iso)
+            fecha = dt.strftime("%Y-%m-%d")
+            hora = dt.strftime("%H:%M")
+            dias[fecha].append(hora)
+
+    # Ordena cada lista de horas
+    for fecha in dias:
+        dias[fecha].sort()
+
+    # Genera todas las fechas del mes
+    total_dias = calendar.monthrange(int(año), int(mes))[1]
+    fechas_del_mes = [
+        datetime(int(año), int(mes), dia).strftime("%Y-%m-%d")
+        for dia in range(1, total_dias + 1)
+    ]
+
+    # Construye lista final
+    agrupados = []
+    for fecha in fechas_del_mes:
+        horas = dias.get(fecha, [])
+        registro = {
+            "fecha": fecha,
+            "entrada": horas[0] if len(horas) >= 1 else "",
+            "almuerzo": horas[1] if len(horas) >= 2 else "",
+            "fin_almuerzo": horas[2] if len(horas) >= 3 else "",
+            "salida": horas[3] if len(horas) >= 4 else ""
+        }
+        agrupados.append(registro)
+
+    return agrupados
+
+
+def dias_habiles_en_mes(año, mes):
+    total_dias = calendar.monthrange(int(año), int(mes))[1]
+    dias_habiles = 0
+    for dia in range(1, total_dias + 1):
+        dia_semana = date(int(año), int(mes), dia).weekday()
+        if dia_semana < 5:  # Lunes=0, Viernes=4
+            dias_habiles += 1
+    return dias_habiles
+
+
+@app.post("/export")
+async def export(request: Request):
+    data = await request.json()
+    nombre = data.get("nombre")
+    mes = data.get("mes")
+    año = data.get("año")
+
+    comienzo = f"{año}-{mes}-01T00:00:00-05:00"
+    fin = f"{año}-{mes}-30T23:59:59-05:00"
+
+    # Obtener y agrupar eventos
+    data = get_terminal_data(nombre, comienzo, fin)
+    eventos_agrupados = agrupar_eventos_por_dia(data, año, mes)
+
+    # Calcular días hábiles
+    dias_habiles = dias_habiles_en_mes(año, mes)
+
+    ruta_excel = "reporte.xlsm"
+    ruta_salida = f"reporte_{nombre}_{año}_{mes}.xlsm"
+
+    app = xw.App(visible=False)
+    wb = app.books.open(ruta_excel)
+    ws = wb.sheets["Reporte de Asistencia"]
+
+    # Escribir días hábiles en F7
+    ws.range("F7").value = dias_habiles
+
+    fila_inicio = 19
+    for i, evento in enumerate(eventos_agrupados):
+        fila = fila_inicio + i
+        ws.range(f"C{fila}").value = evento["fecha"]
+        ws.range(f"D{fila}").value = evento["entrada"]
+        ws.range(f"E{fila}").value = evento["almuerzo"]
+        ws.range(f"F{fila}").value = evento["fin_almuerzo"]
+        ws.range(f"G{fila}").value = evento["salida"]
+        if evento["fecha"]:
+            dia_semana = datetime.strptime(
+                evento["fecha"], "%Y-%m-%d").weekday()
+            if dia_semana in [0, 1, 2, 3, 4]:
+                formula = '=IF([@ENTRADA]>G$7,F$10-E$10-[@ENTRADA],IF([@SALIDA]<F$10,[@SALIDA]-E$10-D$10,G$10))'
+                ws.range(f"H{fila}").formula = formula
+            else:
+                ws.range(f"H{fila}").value = ""
+        else:
+            ws.range(f"H{fila}").value = ""
+
+    wb.save(ruta_salida)
+    wb.close()
+    app.quit()
+
+    return FileResponse(ruta_salida)
 
 
 if __name__ == "__main__":
