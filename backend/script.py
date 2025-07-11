@@ -54,15 +54,18 @@ file_names = [
     'PLA-ING.xlsx',
     'EXP-TEC.xlsx',
     'SUB-MUN.xlsx',
-    'IND-MUN.xlsx'
+    'IND-MUN.xlsx',
+    'INF-PLA.xlsx',
+    'CER-PAR.xlsx'
 ]
 
 # Carpeta: misma que la del script
 folder_path = r'D:\Documents\planosperu-app\backend\docs'
+# Ruta de la imagen
+image_path = r'D:\Downloads\Picture1.png'
 
 # Inicializar la aplicación de Excel, no visible
 app = xw.App(visible=False)
-
 for file_name in file_names:
     file_path = os.path.join(folder_path, file_name)
 
@@ -74,15 +77,22 @@ for file_name in file_names:
         wb = app.books.open(file_path)
         sheet = wb.sheets[0]  # Usa la primera hoja
 
-        # Cambiar el valor de la celda A14 a "Pisos:"
-        sheet.range('A14').value = "Pisos:"
-        print(f"✅ A14 actualizado en {file_name}")
+        # Obtener la celda G4
+        celda = sheet.range('G4')
+        # Insertar la imagen y obtener el objeto picture
+        pic = sheet.pictures.add(
+            image_path,
+            left=celda.left + celda.width / 2,
+            top=celda.top + celda.height / 2
+        )
+
+        print(
+            f"✅ Imagen agregada con esquina superior izquierda en el centro de G4 de {file_name}")
 
         wb.save()
         wb.close()
     except Exception as e:
         print(f"⚠️ Error con {file_name}: {e}")
-
 # Cerrar la instancia de Excel
 app.quit()
 
