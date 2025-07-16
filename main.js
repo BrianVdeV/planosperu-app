@@ -1,3 +1,4 @@
+require('dotenv').config()
 const { app, BrowserWindow, dialog } = require('electron')
 const path = require('path')
 const { spawn } = require('child_process')
@@ -32,7 +33,7 @@ app.on('ready', () => {
     provider: 'github',
     owner: 'BrianVdeV',
     repo: 'planosperu-app',
-    token: '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',
+    token: process.env.GITHUB_TOKEN,
   })
 
   // Configuración del autoUpdater
