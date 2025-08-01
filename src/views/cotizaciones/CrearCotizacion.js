@@ -579,6 +579,16 @@ export default function CrearCotizacion() {
                 <Select
                   options={[
                     {
+                      label: 'Mas solicitado',
+                      options: cotizacion
+                        .filter((c) => c.entidad?.toLowerCase().trim() === 'mas solicitado')
+                        .map((c) => ({
+                          value: c.id,
+                          label: c.nom_tipo,
+                        }))
+                        .sort((a, b) => a.label.localeCompare(b.label)), // Ordenar alfabéticamente
+                    },
+                    {
                       label: 'SUNARP',
                       options: cotizacion
                         .filter((c) => c.entidad?.toLowerCase().trim() === 'sunarp')

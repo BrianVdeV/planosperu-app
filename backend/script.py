@@ -60,7 +60,7 @@ file_names = [
 ]
 
 # Carpeta: misma que la del script
-folder_path = r'D:\Documents\planosperu-app\backend\docs'
+folder_path = r'C:\Users\Brian\Documents\planosperu-app\backend\docs'
 # Ruta de la imagen
 image_path = r'D:\Downloads\Picture1.png'
 
@@ -78,16 +78,10 @@ for file_name in file_names:
         sheet = wb.sheets[0]  # Usa la primera hoja
 
         # Obtener la celda G4
-        celda = sheet.range('G4')
-        # Insertar la imagen y obtener el objeto picture
-        pic = sheet.pictures.add(
-            image_path,
-            left=celda.left + celda.width / 2,
-            top=celda.top + celda.height / 2
-        )
-
+        sheet.range(
+            'D5').value = "Av. Guillermo Billinghurst 1081, Oficina 202 - SJM"
         print(
-            f"✅ Imagen agregada con esquina superior izquierda en el centro de G4 de {file_name}")
+            f"✅ Cambiado texto {file_name}")
 
         wb.save()
         wb.close()
