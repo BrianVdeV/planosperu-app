@@ -1,6 +1,6 @@
 {
   "name": "planos-peru",
-  "version": "1.0.31",
+  "version": "1.0.32",
   "description": "Planos Peru",
   "homepage": ".",
   "bugs": {
@@ -100,18 +100,9 @@
     "directories": {
       "output": "dist"
     },
-    "mac": {
-      "category": "public.app-category.utilities"
-    },
     "win": {
       "target": [
         "nsis"
-      ]
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
       ]
     }
   }
